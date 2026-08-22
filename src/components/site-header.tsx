@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Menu, X, ChevronDown, Plane, HeartHandshake } from "lucide-react";
@@ -8,53 +8,81 @@ import clsx from "clsx";
 import { Container } from "@/components/ui/container";
 import { mainNav } from "@/data/nav";
 
+// Shorter labels for the desktop nav only — the full service names still
+// appear everywhere else (page titles, CTAs, mobile nav); repeating
+// "Consultancy" twice in a single nav row is what was forcing it to overflow.
+const desktopNavLabel: Record<string, string> = {
+  "/immigration-consultancy": "Immigration",
+  "/marriage-consultancy": "Marriage",
+};
+
 export function SiteHeader() {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [getStartedOpen, setGetStartedOpen] = useState(false);
 
+  // Close the mobile menu on route change — adjusted during render (React's
+  // recommended pattern for resetting state on a prop change), not in an effect.
+  const [prevPathname, setPrevPathname] = useState(pathname);
+  if (pathname !== prevPathname) {
+    setPrevPathname(pathname);
+    setMobileOpen(false);
+  }
+
+  // Stop background scroll while the mobile menu is open.
+  useEffect(() => {
+    document.body.style.overflow = mobileOpen ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [mobileOpen]);
+
   return (
     <header className="sticky top-0 z-50 border-b border-stone-200 bg-white/90 backdrop-blur">
-      <Container className="flex h-16 items-center justify-between gap-4">
-        <Link href="/" className="flex items-center gap-2 font-bold text-stone-900" onClick={() => setMobileOpen(false)}>
-          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-600 text-sm font-bold text-white">
+      <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+        <Link
+          href="/"
+          className="flex shrink-0 items-center gap-2 font-bold whitespace-nowrap text-stone-900"
+          onClick={() => setMobileOpen(false)}
+        >
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-600 text-sm font-bold text-white">
             P3
           </span>
           <span className="hidden sm:inline">Pioneer Trio Services</span>
         </Link>
 
-        <nav className="hidden items-center gap-6 lg:flex">
+        <nav className="hidden items-center gap-5 xl:flex">
           {mainNav.map((link) => (
             <Link
               key={link.href}
               href={link.href}
               className={clsx(
-                "text-sm font-medium transition-colors hover:text-brand-700",
+                "text-sm font-medium whitespace-nowrap transition-colors hover:text-brand-700",
                 pathname === link.href ? "text-brand-700" : "text-stone-600"
               )}
             >
-              {link.label}
+              {desktopNavLabel[link.href] ?? link.label}
             </Link>
           ))}
         </nav>
 
-        <div className="hidden lg:block">
+        <div className="hidden shrink-0 xl:block">
           <GetStartedMenu open={getStartedOpen} setOpen={setGetStartedOpen} />
         </div>
 
         <button
           type="button"
-          className="inline-flex items-center justify-center rounded-lg p-2 text-stone-700 lg:hidden"
+          className="inline-flex items-center justify-center rounded-lg p-2 text-stone-700 xl:hidden"
           onClick={() => setMobileOpen((v) => !v)}
           aria-label="Toggle menu"
           aria-expanded={mobileOpen}
         >
           {mobileOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
         </button>
-      </Container>
+      </div>
 
       {mobileOpen && (
-        <div className="border-t border-stone-200 bg-white lg:hidden">
+        <div className="border-t border-stone-200 bg-white xl:hidden">
           <Container className="flex flex-col gap-1 py-4">
             {mainNav.map((link) => (
               <Link
