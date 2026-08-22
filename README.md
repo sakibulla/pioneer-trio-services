@@ -1,36 +1,52 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Pioneer Trio Services
 
-## Getting Started
+Marketing website for Pioneer Trio Services — Immigration Consultancy & Marriage
+Consultancy, Dhaka, Bangladesh. Built with Next.js (App Router), TypeScript, and
+Tailwind CSS, from the project's `Pioneer_Trio_Services_Website_Documentation.md`
+brief.
 
-First, run the development server:
+## Getting started
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Environment variables
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+All optional — the site runs with none of them set. Copy `.env.example` to
+`.env.local` and fill in as each integration is ready:
 
-## Learn More
+- **Lead delivery** — emails form submissions via Gmail SMTP. Needs a Gmail
+  address, an [app password](https://myaccount.google.com/apppasswords), and
+  which inbox(es) leads should land in.
+- **Analytics** — Plausible, only loads after a visitor accepts the cookie
+  consent banner.
+- **Site URL** — used in metadata, `sitemap.xml`, and `robots.txt`; falls back
+  to `https://pioneertrioservices.com` if unset.
 
-To learn more about Next.js, take a look at the following resources:
+## Deploy
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Deploys cleanly to [Vercel](https://vercel.com/new) — import this repo, no
+extra config needed. Add the environment variables above in the Vercel
+project's Settings → Environment Variables once they're ready.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Project structure
 
-## Deploy on Vercel
+- `src/app/` — one route per page (App Router), plus `sitemap.ts`, `robots.ts`,
+  and `opengraph-image.tsx`
+- `src/components/` — shared UI, the site header/footer, and the lead-capture
+  forms
+- `src/data/` — static content (nav, destinations, resource guides)
+- `src/lib/` — form validation (Zod), the lead-notify email helper, and site
+  config
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Status
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Phase 1 (this site) is feature-complete: all pages, forms, and SEO metadata
+are built and verified. Privacy Policy and Terms of Service carry a visible
+"pending legal review" banner and should not be treated as final until
+reviewed by counsel. Phase 1B (client accounts, case tracking, matchmaking
+backend) is a separate, later build — not part of this repo yet.
