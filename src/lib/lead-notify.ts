@@ -2,8 +2,8 @@ import nodemailer from "nodemailer";
 import type { Lead } from "@/lib/lead-schema";
 
 const inboxByFormType: Record<Lead["formType"], string | undefined> = {
-  immigration: process.env.IMMIGRATION_INBOX_EMAIL ?? process.env.LEAD_INBOX_EMAIL,
-  marriage: process.env.MARRIAGE_INBOX_EMAIL ?? process.env.LEAD_INBOX_EMAIL,
+  immigration: process.env.IMMIGRATION_INBOX_EMAIL || process.env.LEAD_INBOX_EMAIL,
+  marriage: process.env.MARRIAGE_INBOX_EMAIL || process.env.LEAD_INBOX_EMAIL,
   contact: process.env.LEAD_INBOX_EMAIL,
   notify: process.env.LEAD_INBOX_EMAIL,
 };
