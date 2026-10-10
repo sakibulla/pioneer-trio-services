@@ -8,23 +8,23 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  --font-sans: var(--font-montserrat);
   --font-mono: var(--font-geist-mono);
 
-  /* Shared brand accent — used for global CTAs, header/footer, links */
-  --color-brand-50: var(--color-indigo-50);
-  --color-brand-100: var(--color-indigo-100);
-  --color-brand-200: var(--color-indigo-200);
-  --color-brand-300: var(--color-indigo-300);
-  --color-brand-400: var(--color-indigo-400);
-  --color-brand-500: var(--color-indigo-500);
-  --color-brand-600: var(--color-indigo-600);
-  --color-brand-700: var(--color-indigo-700);
-  --color-brand-800: var(--color-indigo-800);
-  --color-brand-900: var(--color-indigo-900);
-  --color-brand-950: var(--color-indigo-950);
+  /* Shared brand accent — teal (top petal), used for global CTAs, header/footer, links */
+  --color-brand-50: var(--color-teal-50);
+  --color-brand-100: var(--color-teal-100);
+  --color-brand-200: var(--color-teal-200);
+  --color-brand-300: var(--color-teal-300);
+  --color-brand-400: var(--color-teal-400);
+  --color-brand-500: var(--color-teal-500);
+  --color-brand-600: var(--color-teal-600);
+  --color-brand-700: var(--color-teal-700);
+  --color-brand-800: var(--color-teal-800);
+  --color-brand-900: var(--color-teal-900);
+  --color-brand-950: var(--color-teal-950);
 
-  /* Immigration Consultancy accent */
+  /* Immigration Consultancy accent — blue (left petal) */
   --color-immigration-50: var(--color-blue-50);
   --color-immigration-100: var(--color-blue-100);
   --color-immigration-200: var(--color-blue-200);
@@ -37,7 +37,7 @@
   --color-immigration-900: var(--color-blue-900);
   --color-immigration-950: var(--color-blue-950);
 
-  /* Marriage Consultancy accent */
+  /* Marriage Consultancy accent — pink/rose (right petal) */
   --color-marriage-50: var(--color-rose-50);
   --color-marriage-100: var(--color-rose-100);
   --color-marriage-200: var(--color-rose-200);
@@ -51,9 +51,16 @@
   --color-marriage-950: var(--color-rose-950);
 }
 
+html {
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
 }
 
 /* Plain-HTML fallback so the FAQ accordions (native <details>) get a custom marker */

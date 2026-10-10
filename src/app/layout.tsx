@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Montserrat } from "next/font/google";
 import "./globals.css";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
@@ -7,6 +7,13 @@ import { CookieConsent } from "@/components/cookie-consent";
 import { Analytics } from "@/components/analytics";
 import { siteUrl } from "@/lib/site";
 import { organizationJsonLd } from "@/lib/structured-data";
+
+const montserrat = Montserrat({
+  variable: "--font-montserrat",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800"],
+  display: "swap",
+});
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -21,36 +28,45 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "Pioneer Trio Services | Immigration & Marriage Consultancy, Bangladesh",
-    template: "%s | Pioneer Trio Services",
+    default: "Pioneer Trio | Immigration & Marriage Consultancy, Bangladesh",
+    template: "%s | Pioneer Trio",
   },
   description:
-    "Pioneer Trio Services helps Bangladeshis move abroad and find a spouse — with verified process, real people, and no hidden broker fees.",
+    "Pioneer Trio helps Bangladeshis move abroad and find a spouse — with verified process, real people, and no hidden broker fees.",
   keywords: [
     "immigration consultancy Bangladesh",
     "marriage consultancy Bangladesh",
     "verified matchmaking Bangladesh",
   ],
+  icons: {
+    icon: [
+      { url: "/favicon.ico" },
+      { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+      { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
+    ],
+    shortcut: "/favicon.ico",
+    apple: "/apple-touch-icon.png",
+  },
   openGraph: {
-    title: "Pioneer Trio Services | Immigration & Marriage Consultancy, Bangladesh",
+    title: "Pioneer Trio | Immigration & Marriage Consultancy, Bangladesh",
     description:
       "Two of life's biggest decisions. One trusted partner. Verified process, real people, no hidden broker fees.",
     url: siteUrl,
-    siteName: "Pioneer Trio Services",
+    siteName: "Pioneer Trio",
     locale: "en_US",
     type: "website",
   },
 };
 
 export const viewport: Viewport = {
-  themeColor: "#4f46e5",
+  themeColor: "#14b8a6", // Teal-500
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${montserrat.variable} ${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col bg-white text-stone-900">
         <script
