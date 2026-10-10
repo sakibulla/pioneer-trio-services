@@ -3,21 +3,32 @@ import { NextRequest, NextResponse } from 'next/server';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { token, newPassword } = body;
+    const { code, newPassword } = body;
 
-    if (!token || !newPassword) {
+    if (!code || !newPassword) {
       return NextResponse.json(
-        { success: false, message: 'Token and new password are required' },
+        { success: false, message: 'Code and new password are required' },
         { status: 400 }
       );
     }
 
-    // Stub implementation - in production, this would:
-    // 1. Validate the token exists and is not expired
-    // 2. Hash the new password
-    // 3. Update the user's password in database
-    // 4. Invalidate/delete the reset token
-    // 5. Send confirmation email
+    if (code.length !== 6) {
+      return NextResponse.json(
+        { success: false, message: 'Invalid code format' },
+        { status: 400 }
+      );
+    }
+
+    // TODO: In production:
+    // 1. Look up code in database
+    // 2. Check if code is expired (10 minutes)
+    // 3. Verify code matches email
+    // 4. Hash new password
+    // 5. Update user password in database
+    // 6. Delete/invalidate the code
+    // 7. Send confirmation email
+
+    console.log(`✅ Password reset with code ${code}`);
 
     return NextResponse.json(
       {

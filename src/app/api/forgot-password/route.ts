@@ -1,4 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
+import nodemailer from 'nodemailer';
+
+// Create transporter
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: process.env.GMAIL_USER,
+    pass: process.env.GMAIL_APP_PASSWORD,
+  },
+});
 
 export async function POST(request: NextRequest) {
   try {
@@ -12,36 +22,62 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Generate a demo reset token (in production, this would be a secure token stored in DB)
-    const resetToken = 'demo-reset-' + Math.random().toString(36).substring(2, 15);
-    const resetUrl = `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/reset-password/${resetToken}`;
+    // Generate a 6-digit reset code
+    const resetCode = Math.floor(100000 + Math.random() * 900000).toString();
 
-    console.log(`
-╔════════════════════════════════════════════════════════════╗
-║          PASSWORD RESET CODE (for testing)                ║
-╠════════════════════════════════════════════════════════════╣
-║ Email: ${email}
-║ Reset Token: ${resetToken}
-║ Reset URL: ${resetUrl}
-╠════════════════════════════════════════════════════════════╣
-║ Demo Code sent! Use this token to reset password.         ║
-╚════════════════════════════════════════════════════════════╝
-    `);
+    // TODO: Store resetCode in database with email and expiration (10 minutes)
+    // For now, we'll just send it via email
 
-    // Return success message with demo token in response
+    // Send email with reset code
+    const mailOptions = {
+      from: process.env.GMAIL_USER,
+      to: email,
+      subject: 'Your Pioneer Trio Password Reset Code',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px;">
+            <h2 style="color: #1c1917; margin-top: 0;">Password Reset Code</h2>
+            <p style="color: #666; font-size: 16px;">Hi,</p>
+            <p style="color: #666; font-size: 16px;">You requested a password reset for your Pioneer Trio account. Use the code below:</p>
+            
+            <div style="background-color: #ffffff; border: 2px solid #14b8a6; border-radius: 8px; padding: 20px; margin: 20px 0; text-align: center;">
+              <p style="color: #14b8a6; font-size: 32px; font-weight: bold; margin: 0; letter-spacing: 5px;">${resetCode}</p>
+            </div>
+
+            <p style="color: #666; font-size: 14px;">
+              <strong>This code will expire in 10 minutes.</strong>
+            </p>
+
+            <p style="color: #666; font-size: 14px;">
+              If you didn't request this reset, please ignore this email or contact support.
+            </p>
+
+            <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;">
+            
+            <p style="color: #999; font-size: 12px;">
+              Pioneer Trio Services<br>
+              <a href="https://www.pioneertrioservices.com" style="color: #14b8a6; text-decoration: none;">www.pioneertrioservices.com</a>
+            </p>
+          </div>
+        </div>
+      `,
+    };
+
+    await transporter.sendMail(mailOptions);
+
+    console.log(`✅ Reset code ${resetCode} sent to ${email}`);
+
     return NextResponse.json(
       {
         success: true,
-        message: 'Password reset link sent to your email!',
-        demoToken: resetToken, // For testing - in production remove this
-        demoResetUrl: resetUrl, // For testing - in production remove this
+        message: `Password reset code sent to ${email}. Please check your inbox.`,
       },
       { status: 200 }
     );
   } catch (error) {
     console.error('Forgot password error:', error);
     return NextResponse.json(
-      { success: false, message: 'An error occurred. Please try again.' },
+      { success: false, message: 'Failed to send reset code. Please try again.' },
       { status: 500 }
     );
   }

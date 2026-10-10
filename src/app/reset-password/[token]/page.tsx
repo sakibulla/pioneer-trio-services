@@ -1,332 +1,235 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useState } from "react";
 import Link from "next/link";
-import {
-  ShieldCheck,
-  AlertCircle,
-  CheckCircle2,
-  Eye,
-  EyeOff,
-  Check,
-  X,
-} from "lucide-react";
+import { Eye, EyeOff, ArrowLeft, CheckCircle2, AlertCircle } from "lucide-react";
 import { Container } from "@/components/ui/container";
 import { Button } from "@/components/ui/button";
 
 export default function ResetPasswordPage() {
-  const params = useParams();
-  const router = useRouter();
-  const token = params.token as string;
-
-  const [password, setPassword] = useState("");
+  const [code, setCode] = useState("");
+  const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [showConfirm, setShowConfirm] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [validating, setValidating] = useState(false);
-  const [tokenValid, setTokenValid] = useState<boolean | null>(null);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [submitted, setSubmitted] = useState(false);
+  const [success, setSuccess] = useState(false);
 
-  // Password validation rules
-  const passwordRules = {
-    minLength: password.length >= 8,
-    hasUppercase: /[A-Z]/.test(password),
-    hasNumber: /[0-9]/.test(password),
-    hasSpecial: /[!@#$%^&*]/.test(password),
-  };
-
-  const isPasswordValid =
-    Object.values(passwordRules).every(Boolean) && password === confirmPassword;
-
-  useEffect(() => {
-    const validateToken = async () => {
-      try {
-        const res = await fetch(
-          `https://pioneer-backend-5qhe.onrender.com/api/password-reset/validate?token=${token}`
-        );
-
-        if (res.ok) {
-          const data = await res.json();
-          setTokenValid(data.valid !== false);
-        } else {
-          setTokenValid(false);
-        }
-      } catch (err) {
-        setTokenValid(false);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (token) {
-      validateToken();
+  const validatePassword = (password: string) => {
+    if (password.length < 8) {
+      return "Password must be at least 8 characters";
     }
-  }, [token]);
+    if (!/[A-Z]/.test(password)) {
+      return "Password must contain at least one uppercase letter";
+    }
+    if (!/[0-9]/.test(password)) {
+      return "Password must contain at least one number";
+    }
+    if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+      return "Password must contain at least one special character";
+    }
+    return "";
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isPasswordValid) return;
-
     setError("");
-    setValidating(true);
+
+    if (!code || code.length !== 6) {
+      setError("Please enter a valid 6-digit code");
+      return;
+    }
+
+    const passwordError = validatePassword(newPassword);
+    if (passwordError) {
+      setError(passwordError);
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setError("Passwords do not match");
+      return;
+    }
+
+    setLoading(true);
 
     try {
-      const res = await fetch(
-        "https://pioneer-backend-5qhe.onrender.com/api/password-reset/confirm",
+      const response = await fetch(
+        "/api/password-reset/confirm",
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ token, password }),
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ code, newPassword }),
         }
       );
 
-      if (res.ok) {
-        setSubmitted(true);
-        setTimeout(() => router.push("/portal"), 3000);
+      const data = await response.json();
+
+      if (response.ok) {
+        setSuccess(true);
+        // Redirect to portal after 3 seconds
+        setTimeout(() => {
+          window.location.href = "/portal";
+        }, 3000);
       } else {
-        setError("Failed to reset password. Please try again or request a new link.");
+        setError(data.message || "Failed to reset password. Please try again.");
       }
-    } catch (err) {
-      setError("Could not reach the server. Please try again later.");
+    } catch {
+      setError("Network error. Please check your connection and try again.");
     } finally {
-      setValidating(false);
+      setLoading(false);
     }
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-stone-50 py-12 dark:bg-stone-900">
-        <Container className="max-w-md">
-          <div className="rounded-2xl border border-stone-200 bg-white p-8 shadow-sm dark:border-stone-700 dark:bg-stone-800 dark:shadow-xl dark:shadow-black/20">
-            <div className="flex justify-center">
-              <div className="h-8 w-8 animate-spin rounded-full border-4 border-brand-200 border-t-brand-900 dark:border-brand-900/20 dark:border-t-brand-500" />
-            </div>
-            <p className="mt-4 text-center text-sm text-stone-600 dark:text-stone-400">
-              Validating reset link...
-            </p>
+  return (
+    <div className="min-h-[80vh] bg-white py-12">
+      <Container className="max-w-md">
+        <div className="text-center">
+          <Link
+            href="/portal"
+            className="inline-flex items-center gap-2 text-sm text-stone-500 hover:text-stone-700 mb-4"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to Login
+          </Link>
+          <div className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-brand-900 text-brand-300">
+            <CheckCircle2 className="h-6 w-6" />
           </div>
-        </Container>
-      </div>
-    );
-  }
+          <h1 className="mt-4 font-serif text-3xl font-bold text-stone-900">
+            Create New Password
+          </h1>
+          <p className="mt-2 text-sm text-stone-600">
+            Enter the code from your email and set a new password.
+          </p>
+        </div>
 
-  if (!tokenValid) {
-    return (
-      <div className="min-h-screen bg-stone-50 py-12 dark:bg-stone-900">
-        <Container className="max-w-md">
-          <div className="text-center">
-            <div className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400">
-              <AlertCircle className="h-6 w-6" />
-            </div>
-            <h1 className="mt-4 font-serif text-3xl font-bold text-stone-900 dark:text-stone-100">
-              Invalid Reset Link
-            </h1>
-            <p className="mt-2 text-sm text-stone-600 dark:text-stone-400">
-              This password reset link has expired or is invalid. Please request a new one.
-            </p>
-          </div>
-
-          <div className="mt-8 rounded-2xl border border-stone-200 bg-white p-8 shadow-sm dark:border-stone-700 dark:bg-stone-800 dark:shadow-xl dark:shadow-black/20">
-            <Link
-              href="/forgot-password"
-              className="block w-full rounded-full border-2 border-brand-600 px-6 py-3 text-center text-sm font-semibold text-brand-700 transition-colors hover:bg-brand-50 dark:border-brand-500 dark:text-brand-400 dark:hover:bg-brand-900/30"
-            >
-              Request New Reset Link
-            </Link>
-            <Link
-              href="/portal"
-              className="mt-3 block w-full rounded-full border-2 border-stone-300 px-6 py-3 text-center text-sm font-semibold text-stone-800 transition-colors hover:bg-stone-50 dark:border-stone-600 dark:text-stone-300 dark:hover:bg-stone-800"
-            >
-              Back to Portal
-            </Link>
-          </div>
-        </Container>
-      </div>
-    );
-  }
-
-  if (submitted) {
-    return (
-      <div className="min-h-screen bg-stone-50 py-12 dark:bg-stone-900">
-        <Container className="max-w-md">
-          <div className="rounded-2xl border border-stone-200 bg-white p-8 shadow-sm dark:border-stone-700 dark:bg-stone-800 dark:shadow-xl dark:shadow-black/20">
-            <div className="flex justify-center">
-              <div className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900/30">
-                <CheckCircle2 className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
+        {!success ? (
+          <div className="mt-8 rounded-2xl border border-stone-200 bg-white p-6 shadow-sm">
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-stone-700">
+                  6-Digit Reset Code
+                </label>
+                <input
+                  type="text"
+                  required
+                  maxLength={6}
+                  value={code}
+                  onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
+                  className="mt-1 w-full rounded-lg border border-stone-300 px-3 py-2 text-sm text-center text-2xl font-bold tracking-widest focus:border-brand-500 focus:outline-none"
+                  placeholder="000000"
+                />
+                <p className="mt-1 text-xs text-stone-500">
+                  Check your email for the code
+                </p>
               </div>
-            </div>
-            <h2 className="mt-4 text-center font-serif text-xl font-bold text-stone-900 dark:text-stone-100">
-              Password Reset Successfully
-            </h2>
-            <p className="mt-2 text-center text-sm text-stone-600 dark:text-stone-400">
-              Your password has been updated. You'll be redirected to the portal shortly.
-            </p>
-            <div className="mt-6">
-              <Link
-                href="/portal"
-                className="block w-full rounded-full bg-brand-900 px-6 py-3 text-center text-sm font-semibold text-white transition-colors hover:bg-brand-800 dark:bg-brand-800 dark:hover:bg-brand-700"
+
+              <div>
+                <label className="block text-xs font-semibold text-stone-700">
+                  New Password
+                </label>
+                <div className="relative mt-1">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    required
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    className="w-full rounded-lg border border-stone-300 px-3 py-2 pr-10 text-sm focus:border-brand-500 focus:outline-none"
+                    placeholder="••••••••••••"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600"
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </button>
+                </div>
+                <p className="mt-1 text-xs text-stone-500">
+                  Min 8 chars, uppercase, number, special char
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-stone-700">
+                  Confirm Password
+                </label>
+                <div className="relative mt-1">
+                  <input
+                    type={showConfirmPassword ? "text" : "password"}
+                    required
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="w-full rounded-lg border border-stone-300 px-3 py-2 pr-10 text-sm focus:border-brand-500 focus:outline-none"
+                    placeholder="••••••••••••"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600"
+                    aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+                  >
+                    {showConfirmPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              {error && (
+                <div className="rounded-lg bg-red-50 p-3 text-sm text-red-800 flex items-center gap-2">
+                  <AlertCircle className="h-4 w-4 shrink-0" />
+                  {error}
+                </div>
+              )}
+
+              <Button
+                type="submit"
+                disabled={loading}
+                className="w-full bg-brand-900 text-white hover:bg-brand-800"
               >
-                Go to Portal Now
+                {loading ? "Resetting..." : "Reset Password"}
+              </Button>
+            </form>
+
+            <div className="mt-4 border-t border-stone-100 pt-4">
+              <Link
+                href="/forgot-password"
+                className="text-center block text-xs text-brand-700 hover:underline"
+              >
+                Didn't get a code? Request a new one
               </Link>
             </div>
           </div>
-        </Container>
-      </div>
-    );
-  }
-
-  return (
-    <div className="min-h-screen bg-stone-50 py-12 dark:bg-stone-900">
-      <Container className="max-w-md">
-        <div className="text-center">
-          <div className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-brand-900 text-brand-300 dark:bg-brand-800 dark:text-brand-400">
-            <ShieldCheck className="h-6 w-6" />
-          </div>
-          <h1 className="mt-4 font-serif text-3xl font-bold text-stone-900 dark:text-stone-100">
-            Create New Password
-          </h1>
-          <p className="mt-2 text-sm text-stone-600 dark:text-stone-400">
-            Enter a strong password to secure your account.
-          </p>
-        </div>
-
-        <div className="mt-8 rounded-2xl border border-stone-200 bg-white p-8 shadow-sm dark:border-stone-700 dark:bg-stone-800 dark:shadow-xl dark:shadow-black/20">
-          {error && (
-            <div className="mb-4 flex items-center gap-2 rounded-lg bg-red-50 p-3 text-sm text-red-800 dark:bg-red-900/30 dark:text-red-300">
-              <AlertCircle className="h-4 w-4 shrink-0" />
-              <span>{error}</span>
+        ) : (
+          <div className="mt-8 rounded-2xl border border-stone-200 bg-white p-8 text-center shadow-sm">
+            <div className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100">
+              <CheckCircle2 className="h-8 w-8 text-emerald-600" />
             </div>
-          )}
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-xs font-semibold text-stone-700 dark:text-stone-300">
-                New Password
-              </label>
-              <div className="relative mt-1">
-                <input
-                  type={showPassword ? "text" : "password"}
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full rounded-lg border border-stone-300 px-4 py-2 pr-10 text-sm transition-colors focus:border-brand-500 focus:outline-none dark:border-stone-600 dark:bg-stone-900 dark:text-stone-100"
-                  placeholder="••••••••••••"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600 dark:text-stone-400 dark:hover:text-stone-300"
-                  aria-label={showPassword ? "Hide password" : "Show password"}
-                >
-                  {showPassword ? (
-                    <EyeOff className="h-4 w-4" />
-                  ) : (
-                    <Eye className="h-4 w-4" />
-                  )}
-                </button>
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-stone-700 dark:text-stone-300">
-                Confirm Password
-              </label>
-              <div className="relative mt-1">
-                <input
-                  type={showConfirm ? "text" : "password"}
-                  required
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="w-full rounded-lg border border-stone-300 px-4 py-2 pr-10 text-sm transition-colors focus:border-brand-500 focus:outline-none dark:border-stone-600 dark:bg-stone-900 dark:text-stone-100"
-                  placeholder="••••••••••••"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowConfirm(!showConfirm)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600 dark:text-stone-400 dark:hover:text-stone-300"
-                  aria-label={showConfirm ? "Hide password" : "Show password"}
-                >
-                  {showConfirm ? (
-                    <EyeOff className="h-4 w-4" />
-                  ) : (
-                    <Eye className="h-4 w-4" />
-                  )}
-                </button>
-              </div>
-            </div>
-
-            <div className="rounded-lg border border-stone-200 bg-stone-50 p-4 dark:border-stone-700 dark:bg-stone-900/50">
-              <p className="mb-3 text-xs font-semibold text-stone-700 dark:text-stone-300">
-                Password must contain:
-              </p>
-              <ul className="space-y-2 text-xs text-stone-600 dark:text-stone-400">
-                <li className="flex items-center gap-2">
-                  {passwordRules.minLength ? (
-                    <Check className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-                  ) : (
-                    <X className="h-4 w-4 text-stone-400" />
-                  )}
-                  At least 8 characters
-                </li>
-                <li className="flex items-center gap-2">
-                  {passwordRules.hasUppercase ? (
-                    <Check className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-                  ) : (
-                    <X className="h-4 w-4 text-stone-400" />
-                  )}
-                  One uppercase letter (A-Z)
-                </li>
-                <li className="flex items-center gap-2">
-                  {passwordRules.hasNumber ? (
-                    <Check className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-                  ) : (
-                    <X className="h-4 w-4 text-stone-400" />
-                  )}
-                  One number (0-9)
-                </li>
-                <li className="flex items-center gap-2">
-                  {passwordRules.hasSpecial ? (
-                    <Check className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-                  ) : (
-                    <X className="h-4 w-4 text-stone-400" />
-                  )}
-                  One special character (!@#$%^&*)
-                </li>
-                {password && confirmPassword && (
-                  <li className="flex items-center gap-2">
-                    {password === confirmPassword ? (
-                      <Check className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-                    ) : (
-                      <X className="h-4 w-4 text-red-600 dark:text-red-400" />
-                    )}
-                    Passwords match
-                  </li>
-                )}
-              </ul>
-            </div>
-
-            <Button
-              type="submit"
-              disabled={!isPasswordValid || validating}
-              className="w-full bg-brand-900 text-white hover:bg-brand-800 disabled:opacity-60 dark:bg-brand-800 dark:hover:bg-brand-700"
-            >
-              {validating ? "Resetting..." : "Reset Password"}
-            </Button>
-          </form>
-
-          <p className="mt-4 text-center text-xs text-stone-500 dark:text-stone-400">
-            Remember your password?{" "}
+            <h2 className="mt-4 text-xl font-bold text-stone-900">
+              Password Reset Successful
+            </h2>
+            <p className="mt-2 text-sm text-stone-600">
+              Your password has been updated. Redirecting to login...
+            </p>
             <Link
               href="/portal"
-              className="font-medium text-brand-700 hover:underline dark:text-brand-400"
+              className="mt-6 inline-block w-full rounded-lg bg-brand-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-800"
             >
-              Sign in here
+              Go to Login Now
             </Link>
-          </p>
-        </div>
+          </div>
+        )}
       </Container>
     </div>
   );
