@@ -1,14 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server';
 import nodemailer from 'nodemailer';
 
-// Create transporter
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: process.env.GMAIL_USER,
-    pass: process.env.GMAIL_APP_PASSWORD,
-  },
-});
+let transporter: any = null;
+
+// Initialize transporter with error handling
+function getTransporter() {
+  if (!transporter) {
+    const gmailUser = process.env.GMAIL_USER;
+    const gmailPass = process.env.GMAIL_APP_PASSWORD;
+
+    if (!gmailUser || !gmailPass) {
+      console.error('❌ Gmail credentials not configured');
+      throw new Error('Email service not configured. Please set GMAIL_USER and GMAIL_APP_PASSWORD');
+    }
+
+    transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: gmailUser,
+        pass: gmailPass,
+      },
+    });
+  }
+  return transporter;
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -25,8 +40,8 @@ export async function POST(request: NextRequest) {
     // Generate a 6-digit reset code
     const resetCode = Math.floor(100000 + Math.random() * 900000).toString();
 
-    // TODO: Store resetCode in database with email and expiration (10 minutes)
-    // For now, we'll just send it via email
+    // Get transporter
+    const emailTransporter = getTransporter();
 
     // Send email with reset code
     const mailOptions = {
@@ -63,7 +78,7 @@ export async function POST(request: NextRequest) {
       `,
     };
 
-    await transporter.sendMail(mailOptions);
+    await emailTransporter.sendMail(mailOptions);
 
     console.log(`✅ Reset code ${resetCode} sent to ${email}`);
 
@@ -75,9 +90,10 @@ export async function POST(request: NextRequest) {
       { status: 200 }
     );
   } catch (error) {
-    console.error('Forgot password error:', error);
+    console.error('❌ Forgot password error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Failed to send reset code';
     return NextResponse.json(
-      { success: false, message: 'Failed to send reset code. Please try again.' },
+      { success: false, message: errorMessage },
       { status: 500 }
     );
   }
