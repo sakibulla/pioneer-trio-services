@@ -25,17 +25,45 @@ const TOTAL_STEPS = 8;
 export function ImmigrationAssessmentForm() {
   const [currentStep, setCurrentStep] = useState(1);
   const [submitted, setSubmitted] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Load saved inquiry data from sessionStorage
+  const getSavedInquiryData = () => {
+    if (typeof window !== "undefined") {
+      const saved = sessionStorage.getItem("immigrationInquiry");
+      if (saved) {
+        try {
+          const data = JSON.parse(saved);
+          return {
+            sectionA: {
+              email: data.contact?.split(" ")[0] === data.contact ? data.contact : "", // Extract email if it's an email
+            },
+            sectionB: {
+              destinationCountry: data.destinationCountry || "",
+              applicationType: data.applicationType || "",
+            },
+          };
+        } catch {
+          return {};
+        }
+      }
+    }
+    return {};
+  };
 
   const {
     register,
     handleSubmit,
     watch,
+    trigger,
     formState: { errors },
   } = useForm<ImmigrationAssessment>({
     resolver: zodResolver(immigrationAssessmentSchema),
     mode: "onChange",
     defaultValues: {
       formType: "immigration-assessment",
+      ...getSavedInquiryData(),
     },
   });
 
@@ -50,21 +78,29 @@ export function ImmigrationAssessmentForm() {
   const watchApplicationType = watch("sectionB.applicationType");
 
   const onSubmit = async (data: ImmigrationAssessment) => {
+    setSubmitError(null);
+    setIsSubmitting(true);
     try {
       const res = await fetch("/api/immigration/assessment", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
-
       if (res.ok) {
         setSubmitted(true);
       } else {
-        setSubmitted(true);
+        let msg = "Submission failed. Please try again.";
+        try {
+          const json = await res.json();
+          if (json?.error) msg = json.error;
+        } catch { /* ignore */ }
+        setSubmitError(msg);
       }
     } catch (err) {
       console.error("Submission error:", err);
-      setSubmitted(true);
+      setSubmitError("A network error occurred. Please check your connection and try again.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -83,11 +119,59 @@ export function ImmigrationAssessmentForm() {
     );
   }
 
-  const nextStep = () => {
-    if (currentStep < TOTAL_STEPS) setCurrentStep(currentStep + 1);
+  const nextStep = async () => {
+    // Define fields to validate for each step
+    const fieldsToValidate: Record<
+      number,
+      Array<keyof ImmigrationAssessment>
+    > = {
+      1: [
+        "sectionA.fullLegalName" as keyof ImmigrationAssessment,
+        "sectionA.dateOfBirth" as keyof ImmigrationAssessment,
+        "sectionA.gender" as keyof ImmigrationAssessment,
+        "sectionA.nationality" as keyof ImmigrationAssessment,
+        "sectionA.passportNumber" as keyof ImmigrationAssessment,
+        "sectionA.passportExpiry" as keyof ImmigrationAssessment,
+        "sectionA.previousPassport" as keyof ImmigrationAssessment,
+        "sectionA.maritalStatus" as keyof ImmigrationAssessment,
+        "sectionA.phoneNumber" as keyof ImmigrationAssessment,
+        "sectionA.email" as keyof ImmigrationAssessment,
+        "sectionA.currentAddress" as keyof ImmigrationAssessment,
+      ],
+      2: [
+        "sectionB.destinationCountry" as keyof ImmigrationAssessment,
+        "sectionB.applicationType" as keyof ImmigrationAssessment,
+        "sectionB.appliedBefore" as keyof ImmigrationAssessment,
+      ],
+      3: ["sectionC.employmentStatus" as keyof ImmigrationAssessment],
+      4: [
+        "sectionD.bankBalance" as keyof ImmigrationAssessment,
+        "sectionD.financialCurrency" as keyof ImmigrationAssessment,
+        "sectionD.hasSponsor" as keyof ImmigrationAssessment,
+        "sectionD.fundsSource" as keyof ImmigrationAssessment,
+        "sectionD.unusualDeposits" as keyof ImmigrationAssessment,
+      ],
+      5: [
+        "sectionE.traveledBefore" as keyof ImmigrationAssessment,
+        "sectionE.previousRefusal" as keyof ImmigrationAssessment,
+      ],
+      6: [
+        "sectionF.applicationPurpose" as keyof ImmigrationAssessment,
+        "sectionF.familyInBangladesh" as keyof ImmigrationAssessment,
+        "sectionF.ownProperty" as keyof ImmigrationAssessment,
+      ],
+      7: [],
+    };
+
+    const isValid = await trigger(fieldsToValidate[currentStep] || []);
+    if (isValid && currentStep < TOTAL_STEPS) {
+      setSubmitError(null);
+      setCurrentStep(currentStep + 1);
+    }
   };
 
   const prevStep = () => {
+    setSubmitError(null);
     if (currentStep > 1) setCurrentStep(currentStep - 1);
   };
 
@@ -808,6 +892,13 @@ export function ImmigrationAssessmentForm() {
               </p>
             </div>
 
+            {submitError && (
+              <div role="alert" className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+                <p className="font-semibold">Submission failed</p>
+                <p className="mt-1">{submitError}</p>
+              </div>
+            )}
+
             <div className="space-y-4 rounded-lg border border-stone-200 bg-stone-50 p-5">
               <label className="flex items-start gap-3">
                 <input
@@ -908,8 +999,8 @@ export function ImmigrationAssessmentForm() {
             <ChevronRight className="h-4 w-4" />
           </Button>
         ) : (
-          <Button type="submit" tone="immigration">
-            Submit Assessment
+          <Button type="submit" tone="immigration" disabled={isSubmitting}>
+            {isSubmitting ? "Submitting..." : "Submit Assessment"}
           </Button>
         )}
       </div>

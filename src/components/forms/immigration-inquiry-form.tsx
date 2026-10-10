@@ -53,6 +53,15 @@ export function ImmigrationInquiryForm() {
   return (
     <form
       onSubmit={handleSubmit(async (data) => {
+        // Save inquiry data to sessionStorage for use in assessment form
+        if (typeof window !== "undefined") {
+          sessionStorage.setItem("immigrationInquiry", JSON.stringify({
+            name: data.name,
+            contact: data.contact,
+            destinationCountry: data.destinationCountry,
+            applicationType: data.applicationType,
+          }));
+        }
         const res = await submitLead(data);
         if (res.ok) setSubmitted(true);
       })}
