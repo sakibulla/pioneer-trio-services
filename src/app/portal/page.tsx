@@ -313,7 +313,7 @@ export default function ClientPortalPage() {
 
           <div className="flex items-center gap-3">
             <Link
-              href="http://localhost:5000/api/v1/docs"
+              href="https://pioneer-backend-5qhe.onrender.com/api/v1/docs"
               target="_blank"
               className="inline-flex items-center gap-1.5 rounded-lg border border-stone-200 px-3 py-2 text-xs font-medium text-stone-700 hover:bg-stone-50"
             >
