@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: pioneer-frontend
+    runtime: node
+    plan: free
+    region: ohio
+    
+    # Build configuration
+    buildCommand: npm ci --include=dev && npm run build
+    startCommand: npm start
+    
+    # Environment - production
+    env: production
