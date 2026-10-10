@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Mail, ArrowLeft, CheckCircle2, AlertCircle } from "lucide-react";
+import { Mail, ArrowLeft, CheckCircle2, AlertCircle, Copy } from "lucide-react";
 import { Container } from "@/components/ui/container";
 import { Button } from "@/components/ui/button";
 
@@ -11,6 +11,9 @@ export default function ForgotPasswordPage() {
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [demoToken, setDemoToken] = useState("");
+  const [demoResetUrl, setDemoResetUrl] = useState("");
+  const [copied, setCopied] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,6 +32,8 @@ export default function ForgotPasswordPage() {
       const data = await response.json();
 
       if (response.ok) {
+        setDemoToken(data.demoToken || "");
+        setDemoResetUrl(data.demoResetUrl || "");
         setSubmitted(true);
       } else {
         setError(data.message || "Failed to send reset email. Please try again.");
@@ -38,6 +43,12 @@ export default function ForgotPasswordPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
   return (
@@ -80,7 +91,8 @@ export default function ForgotPasswordPage() {
               </div>
 
               {error && (
-                <div className="rounded-lg bg-red-50 p-3 text-sm text-red-800">
+                <div className="rounded-lg bg-red-50 p-3 text-sm text-red-800 flex items-center gap-2">
+                  <AlertCircle className="h-4 w-4 shrink-0" />
                   {error}
                 </div>
               )}
@@ -116,14 +128,46 @@ export default function ForgotPasswordPage() {
             </h2>
             <p className="mt-2 text-sm text-stone-600">
               We've sent a password reset link to <strong>{email}</strong>.
-              Please check your inbox and follow the instructions.
             </p>
-            <div className="mt-6 space-y-3">
+
+            {demoResetUrl && (
+              <div className="mt-6 space-y-3">
+                <div className="rounded-lg bg-blue-50 p-4 text-left">
+                  <p className="text-xs font-semibold text-blue-900 mb-2">🔐 Demo Reset Link:</p>
+                  <div className="flex items-center gap-2 bg-white p-2 rounded border border-blue-200">
+                    <code className="text-xs text-blue-700 flex-1 break-all">{demoResetUrl}</code>
+                    <button
+                      onClick={() => copyToClipboard(demoResetUrl)}
+                      className="p-1 hover:bg-blue-100 rounded"
+                      title="Copy to clipboard"
+                    >
+                      <Copy className="h-4 w-4 text-blue-600" />
+                    </button>
+                  </div>
+                  <p className="text-xs text-blue-700 mt-2">
+                    Or visit directly: <Link href={demoResetUrl} className="font-bold underline hover:text-blue-900">Click here</Link>
+                  </p>
+                </div>
+
+                <Link
+                  href={demoResetUrl}
+                  className="block w-full rounded-lg bg-brand-900 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-800"
+                >
+                  Go to Reset Password →
+                </Link>
+              </div>
+            )}
+
+            <div className="mt-6 space-y-2 border-t border-stone-200 pt-4">
               <p className="text-xs text-stone-500">
                 Didn't receive the email? Check your spam folder or try again.
               </p>
               <button
-                onClick={() => setSubmitted(false)}
+                onClick={() => {
+                  setSubmitted(false);
+                  setDemoToken("");
+                  setDemoResetUrl("");
+                }}
                 className="w-full rounded-lg border border-stone-300 bg-white px-4 py-2 text-sm font-semibold text-stone-700 hover:bg-stone-50"
               >
                 Try Another Email

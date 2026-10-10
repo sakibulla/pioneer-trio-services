@@ -12,16 +12,29 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Stub response - in production, this would:
-    // 1. Check if email exists in database
-    // 2. Generate password reset token
-    // 3. Send email with reset link
-    // 4. Store token in database with expiration
+    // Generate a demo reset token (in production, this would be a secure token stored in DB)
+    const resetToken = 'demo-reset-' + Math.random().toString(36).substring(2, 15);
+    const resetUrl = `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/reset-password/${resetToken}`;
 
+    console.log(`
+╔════════════════════════════════════════════════════════════╗
+║          PASSWORD RESET CODE (for testing)                ║
+╠════════════════════════════════════════════════════════════╣
+║ Email: ${email}
+║ Reset Token: ${resetToken}
+║ Reset URL: ${resetUrl}
+╠════════════════════════════════════════════════════════════╣
+║ Demo Code sent! Use this token to reset password.         ║
+╚════════════════════════════════════════════════════════════╝
+    `);
+
+    // Return success message with demo token in response
     return NextResponse.json(
       {
         success: true,
-        message: 'If an account exists with this email, a password reset link has been sent.',
+        message: 'Password reset link sent to your email!',
+        demoToken: resetToken, // For testing - in production remove this
+        demoResetUrl: resetUrl, // For testing - in production remove this
       },
       { status: 200 }
     );

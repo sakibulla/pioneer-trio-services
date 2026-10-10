@@ -314,6 +314,16 @@ export default function ClientPortalPage() {
                     )}
                   </button>
                 </div>
+                {isLoginView && (
+                  <div className="mt-2 text-right">
+                    <Link
+                      href="/forgot-password"
+                      className="text-xs font-semibold text-brand-700 hover:text-brand-800 hover:underline"
+                    >
+                      Forgot password?
+                    </Link>
+                  </div>
+                )}
               </div>
 
               <Button
