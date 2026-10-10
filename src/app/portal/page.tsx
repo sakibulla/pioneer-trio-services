@@ -194,27 +194,6 @@ export default function ClientPortalPage() {
     }
   };
 
-  const handleQuickDemoLogin = async (demoEmail: string) => {
-    setEmail(demoEmail);
-    setPassword("Pioneer2026!Secure");
-    setAuthSubmitting(true);
-    try {
-      const res = await portalApi.login(demoEmail, "Pioneer2026!Secure");
-      if (res?.success && res.data?.accessToken) {
-        portalApi.setToken(res.data.accessToken, res.data.user);
-        setToken(res.data.accessToken);
-        setUser(res.data.user);
-        loadDashboardData(res.data.accessToken);
-      } else {
-        setAuthError(res?.message || "Could not log in to demo account.");
-      }
-    } catch {
-      setAuthError("Backend server is starting up. Please try again shortly.");
-    } finally {
-      setAuthSubmitting(false);
-    }
-  };
-
   // 1. Unauthenticated Login / Register View
   if (!user || !token) {
     return (
@@ -363,35 +342,7 @@ export default function ClientPortalPage() {
               </div>
             </div>
 
-            {/* Demo Quick Sign-in Section */}
-            <div className="mt-6 border-t border-stone-100 pt-4">
-              <p className="text-center text-xs font-medium text-stone-500">
-                Or quickly test with pre-seeded staff/client demo accounts:
-              </p>
-              <div className="mt-3 flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  onClick={() => handleQuickDemoLogin("admin@pioneertrioservices.com")}
-                  className="flex-1 rounded-lg border border-stone-200 bg-stone-50 px-2 py-1.5 text-xs font-medium text-stone-700 hover:bg-stone-100"
-                >
-                  👑 Admin Demo
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleQuickDemoLogin("tahmid.coordinator@pioneertrioservices.com")}
-                  className="flex-1 rounded-lg border border-stone-200 bg-stone-50 px-2 py-1.5 text-xs font-medium text-stone-700 hover:bg-stone-100"
-                >
-                  📄 Coordinator Demo
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleQuickDemoLogin("farhana.matchmaker@pioneertrioservices.com")}
-                  className="flex-1 rounded-lg border border-stone-200 bg-stone-50 px-2 py-1.5 text-xs font-medium text-stone-700 hover:bg-stone-100"
-                >
-                  💍 Matchmaker Demo
-                </button>
-              </div>
-            </div>
+
           </div>
         </Container>
       </div>
