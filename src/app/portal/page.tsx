@@ -24,6 +24,12 @@ import { Container } from "@/components/ui/container";
 import { Button } from "@/components/ui/button";
 import { portalApi, type AuthUser, type ClientCase, type ClientMatch } from "@/lib/portal-api";
 
+declare global {
+  interface Window {
+    google?: any;
+  }
+}
+
 export default function ClientPortalPage() {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [token, setToken] = useState<string | null>(null);
@@ -38,6 +44,7 @@ export default function ClientPortalPage() {
   const [lastName, setLastName] = useState("");
   const [authError, setAuthError] = useState("");
   const [authSubmitting, setAuthSubmitting] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
 
   // Portal Dashboard States
   const [activeTab, setActiveTab] = useState<"immigration" | "matrimonial">("immigration");
@@ -56,6 +63,50 @@ export default function ClientPortalPage() {
       setLoading(false);
     }
   }, []);
+
+  useEffect(() => {
+    const loadGSI = () => {
+      if (typeof window !== "undefined" && window.google?.accounts?.id) {
+        window.google.accounts.id.initialize({
+          client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "",
+          callback: handleGoogleSignIn,
+        });
+        
+        // Retry rendering button until element exists (guards against hydration race)
+        const renderButton = () => {
+          const btn = document.getElementById("google-signin-btn");
+          if (btn && btn.children.length === 0) {
+            window.google.accounts.id.renderButton(btn, {
+              theme: "outline",
+              size: "large",
+              width: "100%",
+              text: "signin_with",
+            });
+          } else if (!btn) {
+            // Element not ready yet, retry after a short delay
+            setTimeout(renderButton, 100);
+          }
+        };
+        
+        renderButton();
+      }
+    };
+
+    if (!user && !token) {
+      const script = document.createElement("script");
+      script.src = "https://accounts.google.com/gsi/client";
+      script.async = true;
+      script.defer = true;
+      script.onload = loadGSI;
+      document.head.appendChild(script);
+
+      return () => {
+        if (document.head.contains(script)) {
+          document.head.removeChild(script);
+        }
+      };
+    }
+  }, [user, token]);
 
   const loadDashboardData = async (jwtToken: string) => {
     setDataLoading(true);
@@ -115,6 +166,32 @@ export default function ClientPortalPage() {
     setUser(null);
     setCases([]);
     setMatches([]);
+  };
+
+  const handleGoogleSignIn = async (response: any) => {
+    if (!response.credential) {
+      setAuthError("Google sign-in failed. Please try again.");
+      return;
+    }
+
+    setAuthError("");
+    setGoogleLoading(true);
+
+    try {
+      const res = await portalApi.googleLogin(response.credential);
+      if (res?.success && res.data?.accessToken) {
+        portalApi.setToken(res.data.accessToken, res.data.user);
+        setToken(res.data.accessToken);
+        setUser(res.data.user);
+        loadDashboardData(res.data.accessToken);
+      } else {
+        setAuthError(res?.message || "Google sign-in failed. Please try again.");
+      }
+    } catch (err) {
+      setAuthError("Could not reach authentication server. Ensure server is online.");
+    } finally {
+      setGoogleLoading(false);
+    }
   };
 
   const handleQuickDemoLogin = async (demoEmail: string) => {
@@ -268,6 +345,23 @@ export default function ClientPortalPage() {
                 {authSubmitting ? "Connecting..." : isLoginView ? "Sign In to Portal" : "Create My Portal Account"}
               </Button>
             </form>
+
+            <div className="mt-4">
+              <div className="relative flex items-center">
+                <div className="flex-grow border-t border-stone-200" />
+                <span className="mx-3 text-xs text-stone-400">or continue with</span>
+                <div className="flex-grow border-t border-stone-200" />
+              </div>
+              <div className="mt-3">
+                {googleLoading ? (
+                  <div className="flex items-center justify-center rounded-lg border border-stone-200 bg-stone-50 py-2.5 text-sm text-stone-500">
+                    Signing in with Google...
+                  </div>
+                ) : (
+                  <div id="google-signin-btn" className="flex justify-center" />
+                )}
+              </div>
+            </div>
 
             {/* Demo Quick Sign-in Section */}
             <div className="mt-6 border-t border-stone-100 pt-4">

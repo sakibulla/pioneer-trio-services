@@ -141,4 +141,13 @@ export const portalApi = {
     });
     return res.json();
   },
+
+  googleLogin: async (idToken: string) => {
+    const res = await fetch(`${BACKEND_URL}/auth/google`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ idToken }),
+    });
+    return res.json();
+  },
 };
