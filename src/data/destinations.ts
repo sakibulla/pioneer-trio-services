@@ -40,4 +40,4 @@ export const destinations: Destination[] = [
 ];
 
 export const gulfDisclaimer =
-  "Overseas job placement and recruitment is regulated by BMET under Bangladesh's Overseas Employment and Migrants Act. Pioneer Trio Services provides document preparation and information support for this corridor; we do not charge placement or recruitment fees unless and until we hold a BMET manpower license.";
+  "Overseas job placement and recruitment is regulated by BMET under Bangladesh's Overseas Employment and Migrants Act. Pioneer Trio provides document preparation and information support for this corridor; we do not charge placement or recruitment fees unless and until we hold a BMET manpower license.";

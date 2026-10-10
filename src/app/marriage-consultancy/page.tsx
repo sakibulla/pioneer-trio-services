@@ -1,4 +1,6 @@
-import type { Metadata } from "next";
+"use client";
+
+import { useState } from "react";
 import { BadgeCheck, MessageCircleWarning, UserCheck, Sparkles, ShieldCheck, Users } from "lucide-react";
 import { Container } from "@/components/ui/container";
 import { SectionHeading } from "@/components/ui/section-heading";
@@ -6,12 +8,7 @@ import { Disclaimer } from "@/components/ui/disclaimer";
 import { ProcessSteps } from "@/components/ui/process-steps";
 import { FaqAccordion } from "@/components/ui/faq-accordion";
 import { MarriageInquiryForm } from "@/components/forms/marriage-inquiry-form";
-
-export const metadata: Metadata = {
-  title: "Marriage Consultancy Bangladesh | Verified Matchmaking",
-  description:
-    "Verified profiles, guided introductions, and a real matchmaker — for Bangladeshis in Bangladesh and across the diaspora who are serious about finding a spouse.",
-};
+import { MarriageProfileForm } from "@/components/forms/marriage-profile-form";
 
 const verifiedAndSafe = [
   { icon: BadgeCheck, text: "Identity (ID/passport) verification for every profile." },
@@ -50,11 +47,18 @@ const faqs = [
   {
     question: "Is this a dating app?",
     answer:
-      "No. Pioneer Trio Services is a guided, matchmaker-led service for people seriously seeking marriage, not casual dating.",
+      "No. Pioneer Trio is a guided, matchmaker-led service for people seriously seeking marriage, not casual dating.",
+  },
+  {
+    question: "Do you guarantee I will find a spouse through your service?",
+    answer:
+      "No organization can guarantee a government visa decision or a relationship outcome. Pioneer Trio ensures your file, process, and introductions are handled thoroughly, transparently, and on time — but the outcome of any relationship is not guaranteed.",
   },
 ];
 
 export default function MarriageConsultancyPage() {
+  const [showFullForm, setShowFullForm] = useState(false);
+
   return (
     <>
       <section className="border-b border-marriage-100 bg-marriage-50/50 py-16 sm:py-20">
@@ -63,7 +67,7 @@ export default function MarriageConsultancyPage() {
             eyebrow="Marriage Consultancy"
             tone="marriage"
             title="Verified profiles. A real matchmaker. Genuine relationship intent."
-            description="Pioneer Trio Services is a verified matchmaking service for Bangladeshi clients in Bangladesh and across the diaspora. You build a verified profile, complete a structured compatibility questionnaire, and are matched by a real human matchmaker — supported by our platform's tools, never replaced by them. Every match is grounded in genuine relationship intent, verified identity, and family-context compatibility."
+            description="Pioneer Trio is a verified matchmaking service for Bangladeshi clients in Bangladesh and across the diaspora. You build a verified profile, complete a structured compatibility questionnaire, and are matched by a real human matchmaker — supported by our platform's tools, never replaced by them. Every match is grounded in genuine relationship intent, verified identity, and family-context compatibility."
           />
         </Container>
       </section>
@@ -104,7 +108,7 @@ export default function MarriageConsultancyPage() {
 
       <section className="py-16 sm:py-20">
         <Container>
-          <SectionHeading tone="marriage" title="Why Choose Pioneer Trio Services" />
+          <SectionHeading tone="marriage" title="Why Choose Pioneer Trio" />
           <div className="mt-8 grid gap-5 sm:grid-cols-2">
             {whyChooseUs.map((w) => (
               <div key={w.text} className="flex gap-3 rounded-2xl border border-stone-200 bg-white p-5">
@@ -115,7 +119,7 @@ export default function MarriageConsultancyPage() {
           </div>
           <div className="mt-8 max-w-3xl">
             <Disclaimer>
-              Pioneer Trio Services is a genuine matchmaking and relationship-readiness service.
+              Pioneer Trio is a genuine matchmaking and relationship-readiness service.
               We do not solicit, screen for, or accommodate marriages sought purely for
               immigration status in any country, and we actively screen against trafficking risk.
               Any file showing status-motivated or coercive intent is declined and documented.
@@ -133,11 +137,45 @@ export default function MarriageConsultancyPage() {
         </Container>
       </section>
 
+      {/* Profile Creation Section */}
       <section id="inquiry" className="scroll-mt-20 border-t border-stone-200 bg-marriage-50/40 py-16 sm:py-20">
-        <Container className="max-w-2xl">
-          <SectionHeading tone="marriage" title="Begin My Profile" align="center" />
+        <Container className="max-w-3xl">
+          <SectionHeading tone="marriage" title="Begin My Matchmaking Journey" align="center" />
+          <p className="mt-2 text-center text-sm text-stone-600">
+            Choose how you would like to begin: submit a quick initial inquiry or complete your full verified profile.
+          </p>
+
+          {/* Form Switcher */}
+          <div className="mt-8 grid grid-cols-2 gap-4">
+            <button
+              type="button"
+              onClick={() => setShowFullForm(false)}
+              className={`rounded-xl border p-4 text-left transition-all ${
+                !showFullForm
+                  ? "border-marriage-600 bg-marriage-50 shadow-sm"
+                  : "border-stone-200 bg-white hover:border-marriage-300"
+              }`}
+            >
+              <h3 className="font-semibold text-stone-900">Quick Inquiry</h3>
+              <p className="mt-1 text-sm text-stone-600">Basic contact form - 2 minutes</p>
+            </button>
+            
+            <button
+              type="button"
+              onClick={() => setShowFullForm(true)}
+              className={`rounded-xl border p-4 text-left transition-all ${
+                showFullForm
+                  ? "border-marriage-600 bg-marriage-50 shadow-sm"
+                  : "border-stone-200 bg-white hover:border-marriage-300"
+              }`}
+            >
+              <h3 className="font-semibold text-stone-900">Full Profile (9 Sections)</h3>
+              <p className="mt-1 text-sm text-stone-600">Complete verified profile - 15 minutes</p>
+            </button>
+          </div>
+
           <div className="mt-8">
-            <MarriageInquiryForm />
+            {showFullForm ? <MarriageProfileForm /> : <MarriageInquiryForm />}
           </div>
         </Container>
       </section>

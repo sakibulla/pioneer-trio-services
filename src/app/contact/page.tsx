@@ -6,7 +6,7 @@ import { socialLinks, officeAddress } from "@/data/nav";
 
 export const metadata: Metadata = {
   title: "Contact Us",
-  description: "Have a question before you start? We're happy to help — reach Pioneer Trio Services directly.",
+  description: "Have a question before you start? We're happy to help — reach Pioneer Trio directly.",
 };
 
 export default function ContactPage() {

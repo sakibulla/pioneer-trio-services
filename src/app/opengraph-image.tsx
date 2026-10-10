@@ -1,6 +1,6 @@
 import { ImageResponse } from "next/og";
 
-export const alt = "Pioneer Trio Services — Immigration & Marriage Consultancy, Bangladesh";
+export const alt = "Pioneer Trio — Immigration & Marriage Consultancy, Bangladesh";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -42,7 +42,7 @@ export default function Image() {
           >
             P3
           </div>
-          Pioneer Trio Services
+          Pioneer Trio
         </div>
         <div style={{ display: "flex", fontSize: 56, fontWeight: 700, marginTop: 40, maxWidth: 900 }}>
           Two of life&apos;s biggest decisions. One trusted partner.

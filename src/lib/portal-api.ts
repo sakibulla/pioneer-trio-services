@@ -1,0 +1,144 @@
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_API_URL || "http://localhost:5000/api/v1";
+
+export interface AuthUser {
+  userId: string;
+  email: string;
+  role: string;
+  firstName: string;
+  lastName: string;
+}
+
+export interface ClientCase {
+  id: string;
+  caseReference: string;
+  destinationCountry: string;
+  applicationType: string;
+  status: string;
+  stage?: string;
+  submittedAt?: string;
+  coordinator?: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone?: string;
+  };
+  documents?: Array<{
+    id: string;
+    documentType: string;
+    fileName: string;
+    verified: boolean;
+    uploadedAt: string;
+  }>;
+  notes?: Array<{
+    id: string;
+    note: string;
+    noteType: string;
+    createdAt: string;
+    author: {
+      firstName: string;
+      lastName: string;
+    };
+  }>;
+}
+
+export interface ClientMatch {
+  id: string;
+  rationale: string;
+  status: string;
+  matchmaker?: { name: string };
+  profileA: {
+    id: string;
+    fullName: string;
+    currentCity: string;
+    currentCountry: string;
+    currentProfession: string;
+  };
+  profileB: {
+    id: string;
+    fullName: string;
+    currentCity: string;
+    currentCountry: string;
+    currentProfession: string;
+  };
+}
+
+export const portalApi = {
+  getToken: () => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("pioneer_token");
+    }
+    return null;
+  },
+
+  setToken: (token: string, user: AuthUser) => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("pioneer_token", token);
+      localStorage.setItem("pioneer_user", JSON.stringify(user));
+    }
+  },
+
+  clearToken: () => {
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("pioneer_token");
+      localStorage.removeItem("pioneer_user");
+    }
+  },
+
+  getCurrentUser: (): AuthUser | null => {
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem("pioneer_user");
+      if (stored) {
+        try {
+          return JSON.parse(stored);
+        } catch {
+          return null;
+        }
+      }
+    }
+    return null;
+  },
+
+  login: async (email: string, password: string) => {
+    const res = await fetch(`${BACKEND_URL}/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    });
+    return res.json();
+  },
+
+  register: async (data: { email: string; password: string; firstName: string; lastName: string; phone?: string }) => {
+    const res = await fetch(`${BACKEND_URL}/auth/register`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+    return res.json();
+  },
+
+  getMyCases: async (token: string) => {
+    const res = await fetch(`${BACKEND_URL}/immigration/cases`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return res.json();
+  },
+
+  getMyMatches: async (token: string) => {
+    const res = await fetch(`${BACKEND_URL}/matrimonial/my-matches`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return res.json();
+  },
+
+  respondToMatch: async (token: string, matchId: string, response: "INTERESTED" | "NOT_INTERESTED") => {
+    const res = await fetch(`${BACKEND_URL}/matrimonial/matches/${matchId}/respond`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ response }),
+    });
+    return res.json();
+  },
+};

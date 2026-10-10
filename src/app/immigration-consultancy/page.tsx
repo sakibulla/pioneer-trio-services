@@ -1,4 +1,6 @@
-import type { Metadata } from "next";
+"use client";
+
+import { useState } from "react";
 import { Globe2, UserCheck, ReceiptText, ShieldCheck } from "lucide-react";
 import { Container } from "@/components/ui/container";
 import { SectionHeading } from "@/components/ui/section-heading";
@@ -7,13 +9,8 @@ import { ProcessSteps } from "@/components/ui/process-steps";
 import { FaqAccordion } from "@/components/ui/faq-accordion";
 import { DestinationsGrid } from "@/components/destinations-grid";
 import { ImmigrationInquiryForm } from "@/components/forms/immigration-inquiry-form";
+import { ImmigrationAssessmentForm } from "@/components/forms/immigration-assessment-form";
 import { gulfDisclaimer } from "@/data/destinations";
-
-export const metadata: Metadata = {
-  title: "Immigration Consultancy Bangladesh",
-  description:
-    "Document preparation, guided checklists, and case tracking for study, work, and immigration applications across multiple destination countries.",
-};
 
 const whyChooseUs = [
   { icon: Globe2, text: "One platform for multiple destination countries, instead of juggling separate local agents." },
@@ -35,7 +32,7 @@ const faqs = [
   {
     question: "Do you guarantee my visa or application will be approved?",
     answer:
-      "No organization can guarantee a government decision; we ensure your file is complete, accurate, and on time.",
+      "No organization can guarantee a government visa decision or a relationship outcome. Pioneer Trio ensures your file, process, and introductions are handled thoroughly, transparently, and on time — but the outcome of any government application is not guaranteed.",
   },
   {
     question: "Do you handle overseas job placement to the Gulf or Malaysia?",
@@ -50,6 +47,8 @@ const faqs = [
 ];
 
 export default function ImmigrationConsultancyPage() {
+  const [showFullForm, setShowFullForm] = useState(false);
+
   return (
     <>
       <section className="border-b border-immigration-100 bg-immigration-50/50 py-16 sm:py-20">
@@ -58,7 +57,7 @@ export default function ImmigrationConsultancyPage() {
             eyebrow="Immigration Consultancy"
             tone="immigration"
             title="A complete, accurate application — backed by a coordinator and licensed partners."
-            description="Pioneer Trio Services helps you prepare a complete, accurate application for study, skilled, family, or work opportunities abroad. You get a destination-specific document checklist, a coordinator who reviews your file for completeness, and status tracking from application to decision. Where your case needs licensed legal advice, we refer you to a licensed immigration professional in your destination country under a formal referral agreement."
+            description="Pioneer Trio helps you prepare a complete, accurate application for study, skilled, family, or work opportunities abroad. You get a destination-specific document checklist, a coordinator who reviews your file for completeness, and status tracking from application to decision. Where your case needs licensed legal advice, we refer you to a licensed immigration professional in your destination country under a formal referral agreement."
           />
         </Container>
       </section>
@@ -84,7 +83,7 @@ export default function ImmigrationConsultancyPage() {
             </div>
           </div>
           <div>
-            <SectionHeading tone="immigration" title="Why Choose Pioneer Trio Services" />
+            <SectionHeading tone="immigration" title="Why Choose Pioneer Trio" />
             <div className="mt-8 space-y-5">
               {whyChooseUs.map((w) => (
                 <div key={w.text} className="flex gap-3">
@@ -95,7 +94,7 @@ export default function ImmigrationConsultancyPage() {
             </div>
             <div className="mt-8">
               <Disclaimer>
-                Pioneer Trio Services provides document preparation, checklist guidance, and
+                Pioneer Trio provides document preparation, checklist guidance, and
                 case-tracking support. We are not a licensed immigration law firm and do not
                 provide legal advice. Where your matter requires licensed immigration advice, your
                 file is referred to a licensed immigration professional in the relevant
@@ -117,9 +116,41 @@ export default function ImmigrationConsultancyPage() {
 
       <section id="inquiry" className="scroll-mt-20 border-t border-stone-200 bg-immigration-50/40 py-16 sm:py-20">
         <Container className="max-w-2xl">
-          <SectionHeading tone="immigration" title="Start My Case Inquiry" align="center" />
+          <SectionHeading tone="immigration" title="Start Your Immigration Journey" align="center" />
+          <p className="mt-3 text-center text-stone-600">
+            Choose how you&apos;d like to begin: send a quick inquiry or complete our full initial assessment.
+          </p>
+          
+          <div className="mt-8 grid gap-4 sm:grid-cols-2">
+            <button
+              type="button"
+              onClick={() => setShowFullForm(false)}
+              className={`rounded-xl border p-4 text-left transition-all ${
+                !showFullForm
+                  ? "border-immigration-600 bg-immigration-50 shadow-sm"
+                  : "border-stone-200 bg-white hover:border-immigration-300"
+              }`}
+            >
+              <h3 className="font-semibold text-stone-900">Quick Inquiry</h3>
+              <p className="mt-1 text-sm text-stone-600">Basic contact form - 2 minutes</p>
+            </button>
+            
+            <button
+              type="button"
+              onClick={() => setShowFullForm(true)}
+              className={`rounded-xl border p-4 text-left transition-all ${
+                showFullForm
+                  ? "border-immigration-600 bg-immigration-50 shadow-sm"
+                  : "border-stone-200 bg-white hover:border-immigration-300"
+              }`}
+            >
+              <h3 className="font-semibold text-stone-900">Full Assessment</h3>
+              <p className="mt-1 text-sm text-stone-600">Complete initial assessment - 15 minutes</p>
+            </button>
+          </div>
+
           <div className="mt-8">
-            <ImmigrationInquiryForm />
+            {showFullForm ? <ImmigrationAssessmentForm /> : <ImmigrationInquiryForm />}
           </div>
         </Container>
       </section>

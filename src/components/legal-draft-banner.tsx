@@ -6,7 +6,7 @@ export function LegalDraftBanner() {
       <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" aria-hidden="true" />
       <p>
         <strong>Draft — pending legal review.</strong> This page is a content placeholder drafted
-        from the Pioneer Trio Services business plan. It must be reviewed and finalized by local
+        from the Pioneer Trio business plan. It must be reviewed and finalized by local
         counsel before the site goes live.
       </p>
     </div>

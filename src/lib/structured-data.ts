@@ -12,7 +12,7 @@ export function organizationJsonLd() {
     name: siteName,
     url: siteUrl,
     description:
-      "Pioneer Trio Services helps Bangladeshis move abroad and find a spouse — verified process, real people, no hidden broker fees.",
+      "Pioneer Trio helps Bangladeshis move abroad and find a spouse — verified process, real people, no hidden broker fees.",
     address: {
       "@type": "PostalAddress",
       addressLocality: "Dhaka",

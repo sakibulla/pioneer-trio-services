@@ -20,10 +20,29 @@ export async function POST(request: Request) {
   // delivery below is unconfigured or fails.
   console.log("[lead]", JSON.stringify(parsed.data));
 
-  // Best-effort email to the relevant service-line inbox (Section 10: "website
-  // forms should feed directly into" the CRM pipeline). No-ops until
-  // RESEND_API_KEY / *_INBOX_EMAIL / LEAD_FROM_EMAIL are set — see .env.example.
-  await notifyLead(parsed.data);
+  // Forward submission to backend server
+  try {
+    const backendUrl = process.env.BACKEND_API_URL || "http://localhost:5000/api/v1";
+    const data = parsed.data;
+    
+    // Only forward if it's not a notify lead (which doesn't have name/email)
+    if (data.formType !== "notify") {
+      await fetch(`${backendUrl}/contact/general`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: data.name,
+          email: data.contact,
+          phone: (data as any).phone || "",
+          serviceLine: data.formType || "general",
+          subject: `Website Lead: ${(data as any).interest || (data as any).destinationCountry || "General Inquiry"}`,
+          message: (data as any).message || (data as any).background || (data as any).notes || "Lead submitted via Pioneer Trio website form.",
+        }),
+      });
+    }
+  } catch (backendError) {
+    console.warn("[lead-backend-forward-warning]", backendError);
+  }
 
   return NextResponse.json({ ok: true });
 }

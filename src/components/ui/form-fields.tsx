@@ -8,17 +8,20 @@ export function Field({
   label,
   htmlFor,
   error,
+  optional,
   children,
 }: {
   label: string;
   htmlFor: string;
   error?: string;
+  optional?: boolean;
   children: ReactNode;
 }) {
   return (
     <div>
       <label htmlFor={htmlFor} className="mb-1.5 block text-sm font-medium text-stone-800">
         {label}
+        {optional && <span className="ml-1 text-xs font-normal text-stone-500">(optional)</span>}
       </label>
       {children}
       {error && <p className="mt-1.5 text-sm text-red-600">{error}</p>}

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { MapPin } from "lucide-react";
 import { Container } from "@/components/ui/container";
 import { footerNav, socialLinks, officeAddress } from "@/data/nav";
@@ -9,13 +10,16 @@ export function SiteFooter() {
       <Container className="py-12">
         <div className="flex flex-col gap-8 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <Link href="/" className="flex items-center gap-2 font-bold text-stone-900">
-              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-600 text-sm font-bold text-white">
-                P3
-              </span>
-              Pioneer Trio Services
+            <Link href="/" className="inline-block py-1" aria-label="Pioneer Trio Home">
+              <Image 
+                src="/logo.png" 
+                alt="Pioneer Trio" 
+                width={260}
+                height={52}
+                className="h-11 sm:h-13 w-auto object-contain"
+              />
             </Link>
-            <p className="mt-3 flex items-center gap-1.5 text-sm text-stone-600">
+            <p className="mt-4 flex items-center gap-1.5 text-sm text-stone-600">
               <MapPin className="h-4 w-4" /> {officeAddress}
             </p>
           </div>

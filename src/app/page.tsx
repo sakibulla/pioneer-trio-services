@@ -36,7 +36,7 @@ export default function HomePage() {
             Two of life&apos;s biggest decisions. One trusted partner.
           </h1>
           <p className="mx-auto mt-6 max-w-2xl text-lg text-stone-600">
-            Pioneer Trio Services helps Bangladeshis move abroad and find a spouse — with verified
+            Pioneer Trio helps Bangladeshis move abroad and find a spouse — with verified
             process, real people, and no hidden broker fees.
           </p>
           <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">

@@ -7,7 +7,7 @@ import { ButtonLink } from "@/components/ui/button";
 export const metadata: Metadata = {
   title: "About Us",
   description:
-    "Pioneer Trio Services was founded to give Bangladeshis a transparent, verified path through moving abroad and finding a spouse.",
+    "Pioneer Trio was founded to give Bangladeshis a transparent, verified path through moving abroad and finding a spouse.",
 };
 
 const differentiators = [
@@ -55,7 +55,7 @@ export default function AboutPage() {
         <Container>
           <SectionHeading eyebrow="Our Story" title="Two life-changing decisions deserve one honest process." />
           <p className="mt-6 max-w-3xl text-lg text-stone-600">
-            Pioneer Trio Services was founded to solve a simple problem: Bangladeshis making
+            Pioneer Trio was founded to solve a simple problem: Bangladeshis making
             life-changing decisions — moving abroad, or choosing a spouse — deserve a process that
             is transparent, verified, and genuinely helpful, not one built on hidden fees and
             word-of-mouth risk.

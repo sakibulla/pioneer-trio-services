@@ -35,7 +35,7 @@ export const resources: Resource[] = [
     countryTag: "Gulf & Malaysia",
     readTime: "5 min read",
     body: [
-      "Overseas employment migration to the Gulf states and Malaysia is regulated in Bangladesh by BMET under the Overseas Employment and Migrants Act. For this corridor, Pioneer Trio Services provides document preparation and information support only — we do not charge placement or recruitment fees unless and until we hold a BMET manpower license.",
+      "Overseas employment migration to the Gulf states and Malaysia is regulated in Bangladesh by BMET under the Overseas Employment and Migrants Act. For this corridor, Pioneer Trio provides document preparation and information support only — we do not charge placement or recruitment fees unless and until we hold a BMET manpower license.",
       "In practice, this means we help you organize and verify the documents an employer or recruitment agency will ask for: passport, medical fitness certificate, police clearance, relevant trade or education certificates, and any employer-issued offer documentation you already have.",
       "We do not source the job offer, negotiate placement terms, or act as a recruitment agency. If your situation involves an active recruitment process, we recommend confirming your recruiter's BMET license status directly before proceeding.",
       "Your coordinator will tell you plainly which parts of your case we can support and which parts sit outside our current licensing — this is a corridor where being upfront about scope matters more than moving fast.",
@@ -45,11 +45,11 @@ export const resources: Resource[] = [
     slug: "how-referrals-work",
     title: "How Referrals to Licensed Professionals Work",
     excerpt:
-      "Pioneer Trio Services prepares your file; a licensed immigration professional advises on the law. Here's exactly where that handoff happens.",
+      "Pioneer Trio prepares your file; a licensed immigration professional advises on the law. Here's exactly where that handoff happens.",
     category: "immigration",
     readTime: "4 min read",
     body: [
-      "Pioneer Trio Services is not a licensed immigration law firm and does not provide legal advice. What we do is document preparation, checklist guidance, and case-tracking support — making sure your file is complete, accurate, and organized before it needs a legal review.",
+      "Pioneer Trio is not a licensed immigration law firm and does not provide legal advice. What we do is document preparation, checklist guidance, and case-tracking support — making sure your file is complete, accurate, and organized before it needs a legal review.",
       "When your case involves a matter that requires licensed advice — a complex sponsorship situation, a prior refusal, or a legal question about eligibility — your coordinator refers your file to a licensed immigration professional in your destination country, under a formal referral agreement.",
       "You are told when a referral is happening and why, before it happens. The licensed professional handles the legal advice and strategy; your coordinator continues tracking your case status and timeline alongside them.",
       "No organization can guarantee a government visa decision. What we can guarantee is that your file, process, and referrals are handled thoroughly, transparently, and on time.",

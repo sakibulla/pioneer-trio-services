@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { Menu, X, ChevronDown, Plane, HeartHandshake } from "lucide-react";
 import clsx from "clsx";
@@ -38,26 +39,31 @@ export function SiteHeader() {
   }, [mobileOpen]);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-stone-200 bg-white/90 backdrop-blur">
-      <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+    <header className="sticky top-0 z-50 border-b border-stone-200/80 bg-white/95 backdrop-blur-md transition-all">
+      <div className="mx-auto flex h-18 sm:h-20 w-full max-w-7xl items-center justify-between gap-6 px-4 sm:px-6 lg:px-8">
         <Link
           href="/"
-          className="flex shrink-0 items-center gap-2 font-bold whitespace-nowrap text-stone-900"
+          className="flex shrink-0 items-center py-1.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 rounded-lg"
           onClick={() => setMobileOpen(false)}
+          aria-label="Pioneer Trio Home"
         >
-          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-600 text-sm font-bold text-white">
-            P3
-          </span>
-          <span className="hidden sm:inline">Pioneer Trio Services</span>
+          <Image 
+            src="/logo.png" 
+            alt="Pioneer Trio" 
+            width={260}
+            height={52}
+            className="h-9 sm:h-12 w-auto shrink-0 object-contain"
+            priority
+          />
         </Link>
 
-        <nav className="hidden items-center gap-5 xl:flex">
+        <nav className="hidden items-center gap-6 xl:flex">
           {mainNav.map((link) => (
             <Link
               key={link.href}
               href={link.href}
               className={clsx(
-                "text-sm font-medium whitespace-nowrap transition-colors hover:text-brand-700",
+                "text-[14px] font-semibold tracking-tight whitespace-nowrap transition-colors hover:text-brand-700",
                 pathname === link.href ? "text-brand-700" : "text-stone-600"
               )}
             >
@@ -66,13 +72,19 @@ export function SiteHeader() {
           ))}
         </nav>
 
-        <div className="hidden shrink-0 xl:block">
+        <div className="hidden items-center gap-3 shrink-0 xl:flex">
+          <Link
+            href="/portal"
+            className="rounded-full border border-stone-200 bg-stone-50/80 px-4 py-2 text-xs font-semibold text-stone-800 transition-all hover:bg-stone-100 hover:border-stone-300 shadow-2xs"
+          >
+            Client Portal
+          </Link>
           <GetStartedMenu open={getStartedOpen} setOpen={setGetStartedOpen} />
         </div>
 
         <button
           type="button"
-          className="inline-flex items-center justify-center rounded-lg p-2 text-stone-700 xl:hidden"
+          className="inline-flex items-center justify-center rounded-lg p-2 text-stone-700 hover:bg-stone-100 xl:hidden"
           onClick={() => setMobileOpen((v) => !v)}
           aria-label="Toggle menu"
           aria-expanded={mobileOpen}

@@ -5,9 +5,9 @@ import { ResourcesExplorer } from "@/components/resources-explorer";
 import { resources } from "@/data/resources";
 
 export const metadata: Metadata = {
-  title: "Immigration & Marriage Guides",
+  title: "Immigration & Marriage Guides | Pioneer Trio",
   description:
-    "Bengali-language-priority destination checklists, process explainers, and matchmaking guides from Pioneer Trio Services.",
+    "Visa checklist Bangladesh, Gulf employment visa documents, matchmaking guide Bangladesh. Bengali-language-priority destination checklists, process explainers, and matchmaking guides from Pioneer Trio.",
 };
 
 export default function ResourcesPage() {

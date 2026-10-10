@@ -5,7 +5,7 @@ import { ButtonLink } from "@/components/ui/button";
 
 export const metadata: Metadata = {
   title: "Page Not Found",
-  description: "This page doesn't exist — find your way back to Pioneer Trio Services.",
+  description: "This page doesn't exist — find your way back to Pioneer Trio.",
 };
 
 export default function NotFound() {

@@ -7,7 +7,7 @@ import { ButtonLink } from "@/components/ui/button";
 export const metadata: Metadata = {
   title: "Trust & Safety",
   description:
-    "Every safeguard behind Pioneer Trio Services' Immigration and Marriage Consultancy services, in one place.",
+    "Every safeguard behind Pioneer Trio's Immigration and Marriage Consultancy services, in one place.",
 };
 
 const immigrationSafeguards = [
