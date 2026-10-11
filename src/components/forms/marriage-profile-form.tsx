@@ -553,9 +553,16 @@ export function MarriageProfileForm({ user }: MarriageProfileFormProps) {
               Next <ChevronRight className="h-4 w-4" />
             </Button>
           ) : (
-            <Button type="submit" disabled={isSubmitting} className="bg-marriage-800 text-white hover:bg-marriage-900">
-              {isSubmitting ? "Submitting Profile..." : "Submit Profile for Review"}
-            </Button>
+            <>
+              {Object.keys(errors).length > 0 && (
+                <p className="text-xs text-red-600 mb-2">
+                  Please fix errors: {Object.keys(errors).join(', ')}
+                </p>
+              )}
+              <Button type="submit" disabled={isSubmitting} className="bg-marriage-800 text-white hover:bg-marriage-900">
+                {isSubmitting ? "Submitting Profile..." : "Submit Profile for Review"}
+              </Button>
+            </>
           )}
         </div>
       </div>
