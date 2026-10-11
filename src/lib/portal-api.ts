@@ -119,7 +119,7 @@ export const portalApi = {
   getMyCases: async (token: string) => {
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
       
       const res = await fetch(`${BACKEND_URL}/immigration/cases`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -135,10 +135,11 @@ export const portalApi = {
       const json = await res.json();
       console.log("[getMyCases] Response:", json);
       
-      // Handle different response formats
-      if (json.data) return json;
+      // Backend returns { data: { items: [...], total, page, limit, totalPages } }
+      if (json.data?.items) return { data: json.data.items };
+      if (json.items) return { data: json.items };
+      if (json.data && Array.isArray(json.data)) return { data: json.data };
       if (Array.isArray(json)) return { data: json };
-      if (json.cases) return { data: json.cases };
       return { data: [] };
     } catch (error) {
       console.error("[getMyCases] Error:", error);
@@ -149,7 +150,7 @@ export const portalApi = {
   getMyMatches: async (token: string) => {
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
       
       const res = await fetch(`${BACKEND_URL}/matrimonial/my-matches`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -165,10 +166,11 @@ export const portalApi = {
       const json = await res.json();
       console.log("[getMyMatches] Response:", json);
       
-      // Handle different response formats
-      if (json.data) return json;
+      // Handle different response formats from matrimonial endpoint
+      if (json.data?.items) return { data: json.data.items };
+      if (json.items) return { data: json.items };
+      if (json.data && Array.isArray(json.data)) return { data: json.data };
       if (Array.isArray(json)) return { data: json };
-      if (json.matches) return { data: json.matches };
       return { data: [] };
     } catch (error) {
       console.error("[getMyMatches] Error:", error);
