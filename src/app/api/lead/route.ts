@@ -30,13 +30,13 @@ export async function POST(request: Request) {
       const quickEnquiryPayload = {
         fullName: data.name,
         email: data.contact,
-        phone: (data as any).phone || "0000000000", // Placeholder phone
-        dateOfBirth: "1990-01-01", // Placeholder DOB
+        phone: (data as any).phone || "0000000000",
+        dateOfBirth: "1990-01-01",
         gender: "MALE",
         nationality: "Bangladesh",
         nidNumber: null,
-        passportNumber: "PLACEHOLDER", // Placeholder passport
-        passportExpiry: "2030-12-31", // Placeholder expiry
+        passportNumber: "PLACEHOLDER",
+        passportExpiry: "2030-12-31",
         maritalStatus: "NEVER_MARRIED",
         currentAddress: "Not provided",
         
@@ -78,28 +78,15 @@ export async function POST(request: Request) {
         },
       };
 
-      try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
-        
-        console.log("[lead-assessment] Sending payload to backend:", quickEnquiryPayload.email);
-        
-        // Don't wait for backend - fire and forget to avoid Vercel timeout
-        fetch(`${backendUrl}/immigration/assessments`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(quickEnquiryPayload),
-          signal: controller.signal,
-        }).then(res => {
-          console.log("[lead-assessment] Backend response status:", res.status);
-        }).catch(err => {
-          console.error("[lead-assessment-error]", err);
-        }).finally(() => {
-          clearTimeout(timeoutId);
-        });
-      } catch (assessmentError) {
-        console.error("[lead-assessment-error]", assessmentError);
-      }
+      // Submit directly to backend API (CORS enabled)
+      const backendUrl = "https://pioneer-backend-5qhe.onrender.com/api/v1";
+      fetch(`${backendUrl}/immigration/assessments`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(quickEnquiryPayload),
+      }).catch(err => {
+        console.error("[lead-assessment-error]", err);
+      });
     } else if (data.formType !== "notify") {
       // For other form types, forward to contact/general
       await fetch(`${backendUrl}/contact/general`, {
