@@ -32,12 +32,12 @@ export async function POST(request: Request) {
         email: data.contact,
         phone: "",
         dateOfBirth: "",
-        gender: "NOT_SPECIFIED",
+        gender: "MALE", // Use valid enum
         nationality: "Bangladesh",
         nidNumber: null,
         passportNumber: "",
         passportExpiry: "",
-        maritalStatus: "NOT_SPECIFIED",
+        maritalStatus: "NEVER_MARRIED", // Use valid enum
         currentAddress: "",
         
         destinationCountry: (data as any).destinationCountry || "Not specified",
@@ -49,7 +49,7 @@ export async function POST(request: Request) {
         refusalDetails: null,
 
         employmentProfile: {
-          employmentStatus: "NOT_SPECIFIED",
+          employmentStatus: "UNEMPLOYED", // Use valid enum
           currentEmployer: null,
           jobTitle: null,
           monthlyIncome: 0,
@@ -61,7 +61,7 @@ export async function POST(request: Request) {
           currentBankBalance: 0,
           hasSponsor: false,
           sponsorRelationship: null,
-          sourceOfFunds: "Not specified",
+          sourceOfFunds: "Personal savings",
           unusualDeposits: false,
           unusualDepositDetails: null,
         },
