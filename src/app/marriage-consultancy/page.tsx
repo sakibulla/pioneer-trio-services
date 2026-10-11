@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { BadgeCheck, MessageCircleWarning, UserCheck, Sparkles, ShieldCheck, Users } from "lucide-react";
 import { Container } from "@/components/ui/container";
 import { SectionHeading } from "@/components/ui/section-heading";
@@ -9,6 +9,7 @@ import { ProcessSteps } from "@/components/ui/process-steps";
 import { FaqAccordion } from "@/components/ui/faq-accordion";
 import { MarriageInquiryForm } from "@/components/forms/marriage-inquiry-form";
 import { MarriageProfileForm } from "@/components/forms/marriage-profile-form";
+import { portalApi, type AuthUser } from "@/lib/portal-api";
 
 const verifiedAndSafe = [
   { icon: BadgeCheck, text: "Identity (ID/passport) verification for every profile." },
@@ -58,6 +59,14 @@ const faqs = [
 
 export default function MarriageConsultancyPage() {
   const [showFullForm, setShowFullForm] = useState(false);
+  const [user, setUser] = useState<AuthUser | null>(null);
+
+  useEffect(() => {
+    const savedUser = portalApi.getCurrentUser();
+    if (savedUser) {
+      setUser(savedUser);
+    }
+  }, []);
 
   return (
     <>
@@ -175,7 +184,7 @@ export default function MarriageConsultancyPage() {
           </div>
 
           <div className="mt-8">
-            {showFullForm ? <MarriageProfileForm /> : <MarriageInquiryForm />}
+            {showFullForm ? <MarriageProfileForm user={user} /> : <MarriageInquiryForm />}
           </div>
         </Container>
       </section>

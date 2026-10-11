@@ -10,7 +10,15 @@ import { Button } from "@/components/ui/button";
 
 const TOTAL_STEPS = 9;
 
-export function MarriageProfileForm() {
+interface MarriageProfileFormProps {
+  user?: {
+    firstName: string;
+    lastName: string;
+    email: string;
+  } | null;
+}
+
+export function MarriageProfileForm({ user }: MarriageProfileFormProps) {
   const [currentStep, setCurrentStep] = useState(1);
   const [submitted, setSubmitted] = useState(false);
   const [photos, setPhotos] = useState<File[]>([]);
@@ -27,6 +35,12 @@ export function MarriageProfileForm() {
     mode: "onChange",
     defaultValues: {
       formType: "marriage-profile",
+      sectionA: user ? {
+        fullName: `${user.firstName} ${user.lastName}`.trim(),
+      } as any : undefined,
+      sectionI: user ? {
+        email: user.email,
+      } as any : undefined,
       sectionG: {
         photoCount: 0,
       },
