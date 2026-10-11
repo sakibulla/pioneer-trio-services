@@ -16,6 +16,7 @@ import { Container } from "@/components/ui/container";
 import { Button } from "@/components/ui/button";
 import { PortalHeader } from "./PortalHeader";
 import { portalApi, type AuthUser, type ClientCase, type ClientMatch } from "@/lib/portal-api";
+import { CaseEditModal } from "./CaseEditModal";
 
 interface ClientDashboardProps {
   user: AuthUser;
@@ -43,6 +44,7 @@ export function ClientDashboard({ user, token, onLogout }: ClientDashboardProps)
   const [myProfile, setMyProfile] = useState<MatrimonialProfile | null>(null);
   const [dataLoading, setDataLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [editingCase, setEditingCase] = useState<ClientCase | null>(null);
 
   useEffect(() => {
     if (!token) return; // Don't load if no token
@@ -227,6 +229,18 @@ export function ClientDashboard({ user, token, onLogout }: ClientDashboardProps)
                     </div>
                   </div>
 
+                  {/* Edit Button - Only show if case is still SUBMITTED */}
+                  {c.status === "SUBMITTED" && (
+                    <div className="mt-4">
+                      <button
+                        onClick={() => setEditingCase(c)}
+                        className="px-4 py-2 bg-immigration-700 text-white text-sm font-semibold rounded-lg hover:bg-immigration-800 transition-colors"
+                      >
+                        Edit Case Details
+                      </button>
+                    </div>
+                  )}
+
                   {/* Document Checklist */}
                   <div className="mt-6 rounded-xl border border-stone-200 bg-stone-50 p-4">
                     <h4 className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-stone-700">
@@ -366,6 +380,20 @@ export function ClientDashboard({ user, token, onLogout }: ClientDashboardProps)
           </div>
         )}
       </Container>
+
+      {/* Case Edit Modal */}
+      {editingCase && (
+        <CaseEditModal
+          caseData={editingCase}
+          isOpen={!!editingCase}
+          onClose={() => setEditingCase(null)}
+          onSave={(updated) => {
+            setCases(cases.map(c => c.id === updated.id ? updated : c));
+            setEditingCase(null);
+          }}
+          token={token}
+        />
+      )}
     </div>
   );
 }

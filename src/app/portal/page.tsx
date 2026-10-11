@@ -49,54 +49,74 @@ export default function ClientPortalPage() {
     }
   }, []);
 
+  // Load GSI script once at component mount
   useEffect(() => {
-    // Load GSI when not authenticated
-    if (user || token) return; // Skip if authenticated
+    if (typeof window === "undefined") return;
     
-    const loadGSI = () => {
-      if (typeof window !== "undefined" && window.google?.accounts?.id) {
+    const loadGSIScript = () => {
+      if (window.google?.accounts?.id) {
+        gsiInitializedRef.current = true;
+      }
+    };
+    
+    // Check if script already exists
+    const existingScript = document.querySelector('script[src="https://accounts.google.com/gsi/client"]');
+    
+    if (existingScript) {
+      // Script already loaded
+      if (window.google?.accounts?.id) {
+        gsiInitializedRef.current = true;
+      }
+    } else {
+      // Add script for first time
+      const script = document.createElement("script");
+      script.src = "https://accounts.google.com/gsi/client";
+      script.async = true;
+      script.defer = true;
+      script.onload = loadGSIScript;
+      document.head.appendChild(script);
+    }
+  }, []); // Only run once at mount
+
+  // Initialize/render GSI button when auth state changes
+  useEffect(() => {
+    // Only show button if not authenticated
+    if (user || token) return;
+    
+    if (typeof window === "undefined") return;
+    
+    const initializeGSI = () => {
+      if (window.google?.accounts?.id) {
+        // Clear any previous initialization
+        try {
+          window.google.accounts.id.cancel();
+        } catch {
+          // Ignore errors on cancel
+        }
+        
+        // Initialize GSI
         window.google.accounts.id.initialize({
           client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "",
           callback: handleGoogleSignIn,
         });
         
-        // Retry rendering button until element exists
-        const renderButton = () => {
-          const btn = document.getElementById("google-signin-btn");
-          if (btn && btn.children.length === 0) {
-            window.google.accounts.id.renderButton(btn, {
-              theme: "outline",
-              size: "large",
-              text: "signin_with",
-            });
-          } else if (!btn) {
-            setTimeout(renderButton, 100);
-          }
-        };
-        
-        renderButton();
+        // Clear button div and re-render
+        const btn = document.getElementById("google-signin-btn");
+        if (btn) {
+          btn.innerHTML = ""; // Clear previous render
+          window.google.accounts.id.renderButton(btn, {
+            theme: "outline",
+            size: "large",
+            text: "signin_with",
+          });
+        }
       }
     };
-
-    if (typeof window !== "undefined") {
-      // Check if script already exists
-      const existingScript = document.querySelector('script[src="https://accounts.google.com/gsi/client"]');
-      
-      if (existingScript) {
-        // Script already loaded, just initialize
-        if (window.google?.accounts?.id) {
-          loadGSI();
-        }
-      } else {
-        // Add script for first time
-        const script = document.createElement("script");
-        script.src = "https://accounts.google.com/gsi/client";
-        script.async = true;
-        script.defer = true;
-        script.onload = loadGSI;
-        document.head.appendChild(script);
-      }
-    }
+    
+    // Delay slightly to ensure button element is in DOM
+    const timer = setTimeout(initializeGSI, 100);
+    
+    return () => clearTimeout(timer);
   }, [user, token]); // Re-run when auth state changes
 
   const handleAuthSubmit = async (e: React.FormEvent) => {

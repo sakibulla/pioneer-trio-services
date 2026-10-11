@@ -229,7 +229,7 @@ export default function CaseDetailPage() {
         </div>
 
         {/* Documents */}
-        {caseDetail.documents && caseDetail.documents.length > 0 && (
+        {caseDetail?.documents && Array.isArray(caseDetail.documents) && caseDetail.documents.length > 0 && (
           <div className="rounded-2xl border border-stone-200 bg-white p-6 mb-6">
             <h2 className="text-lg font-bold text-stone-900 mb-4">Encrypted Case Documents & Verifications</h2>
             <div className="space-y-3">

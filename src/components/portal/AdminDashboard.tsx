@@ -75,10 +75,16 @@ export function AdminDashboard({ user, token, onLogout }: AdminDashboardProps) {
   const loadDashboardData = async () => {
     setDataLoading(true);
     try {
-      // Call actual API methods
-      const casesRes = await portalApi.getAllCases(token);
-      const leadsRes = await portalApi.getAllLeads(token);
-      const profilesRes = await portalApi.getAllProfiles(token);
+      // Use Promise.allSettled to handle partial failures - if one fails, others still load
+      const results = await Promise.allSettled([
+        portalApi.getAllCases(token),
+        portalApi.getAllLeads(token),
+        portalApi.getAllProfiles(token),
+      ]);
+      
+      const casesRes = results[0].status === 'fulfilled' ? results[0].value : { data: [] };
+      const leadsRes = results[1].status === 'fulfilled' ? results[1].value : { data: [] };
+      const profilesRes = results[2].status === 'fulfilled' ? results[2].value : { data: [] };
       
       console.log("[AdminDashboard] Cases response:", casesRes);
       console.log("[AdminDashboard] Leads response:", leadsRes);
