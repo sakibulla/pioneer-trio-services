@@ -22,7 +22,7 @@ export async function POST(request: Request) {
 
   // Forward submission to backend server
   try {
-    const backendUrl = process.env.BACKEND_API_URL || "http://localhost:5000/api/v1";
+    const backendUrl = "https://pioneer-backend-5qhe.onrender.com/api/v1";
     const data = parsed.data;
     
     // If it's an immigration quick enquiry, create a case in the database
@@ -30,62 +30,139 @@ export async function POST(request: Request) {
       const quickEnquiryPayload = {
         fullName: data.name,
         email: data.contact,
-        phone: (data as any).phone || "0000000000",
+        phone: (data as any).phone || "00000",
         dateOfBirth: "1990-01-01",
         gender: "MALE",
-        nationality: "Bangladesh",
-        nidNumber: null,
+        nationality: "Bangladeshi",
+        nidNumber: "",
         passportNumber: "PLACEHOLDER",
         passportExpiry: "2030-12-31",
-        maritalStatus: "NEVER_MARRIED",
-        currentAddress: "Not provided",
+        maritalStatus: "SINGLE",
+        currentAddress: "TBD",
         
-        destinationCountry: (data as any).destinationCountry || "Not specified",
-        applicationType: (data as any).applicationType || "Not specified",
-        specificProgram: null,
-        targetApplicationDate: null,
+        destinationCountry: (data as any).destinationCountry || "TBD",
+        applicationType: (data as any).applicationType || "TBD",
+        specificProgram: "",
+        targetApplicationDate: "",
         priorApplications: false,
         priorRefusals: false,
-        refusalDetails: null,
+        refusalDetails: "",
 
         employmentProfile: {
           employmentStatus: "UNEMPLOYED",
-          currentEmployer: null,
-          jobTitle: null,
+          currentEmployer: "",
+          jobTitle: "",
+          employmentSince: "",
           monthlyIncome: 0,
-          businessName: null,
-          businessType: null,
+          businessName: "",
+          businessType: "",
+          businessSince: "",
+          annualRevenue: 0,
+          institution: "",
+          fieldOfStudy: "",
+          expectedGraduation: "",
         },
 
         financialProfile: {
           currentBankBalance: 0,
           hasSponsor: false,
-          sponsorRelationship: null,
+          sponsorRelationship: "",
+          sponsorContribution: 0,
           sourceOfFunds: "Personal savings",
           unusualDeposits: false,
-          unusualDepositDetails: null,
+          unusualDepositDetails: "",
         },
 
         travelHistory: [],
 
         homeCountryTies: {
-          applicationPurpose: (data as any).message || "Quick enquiry submitted",
-          familyInBangladesh: false,
-          familyDetails: null,
+          applicationPurpose: (data as any).message || "Quick enquiry",
+          familyInBangladesh: true,
+          familyDetails: "",
           ownsProperty: false,
-          propertyDetails: null,
-          intentToReturn: "Not specified",
+          propertyDetails: "",
+          intentToReturn: "Undecided",
         },
       };
 
-      // Submit directly to backend API (CORS enabled)
-      const backendUrl = "https://pioneer-backend-5qhe.onrender.com/api/v1";
+      // Submit directly to backend API
       fetch(`${backendUrl}/immigration/assessments`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(quickEnquiryPayload),
       }).catch(err => {
         console.error("[lead-assessment-error]", err);
+      });
+    } else if (data.formType === "marriage") {
+      // Marriage quick enquiry - create matrimonial profile
+      const locationParts = ((data as any).currentLocation || "Bangladesh").split(",").map((s: string) => s.trim());
+      const country = locationParts[0] || "Bangladesh";
+      const city = locationParts[1] || locationParts[0] || "Dhaka";
+
+      const matrimonyPayload = {
+        fullName: data.name,
+        dateOfBirth: "1990-01-01",
+        gender: "MALE",
+        maritalStatus: "SINGLE",
+        currentCountry: country,
+        currentCity: city,
+        motherTongue: "Bengali",
+        languagesSpoken: ["Bengali"],
+        
+        fatherOccupation: "Professional",
+        motherOccupation: "Homemaker",
+        familyType: "NUCLEAR",
+        familyLocation: "BD",
+        
+        educationLevel: "Graduate",
+        currentProfession: "Professional",
+        
+        religion: "Islam",
+        religiousPractice: "Moderate",
+        
+        dietaryPreference: "Halal",
+        smokingHabits: "No",
+        drinkingHabits: "No",
+        
+        email: data.contact,
+        phone: (data as any).phone || "00000",
+        
+        bloodGroup: "B+",
+        visaStatus: "Citizen",
+        siblingsCount: 1,
+        siblingsMarried: 0,
+        familyDescription: "",
+        
+        institution: "Unspecified",
+        fieldOfStudy: "General",
+        jobTitle: "Professional",
+        employer: "Private",
+        incomeBracket: "Moderate",
+        
+        sect: "Sunni",
+        ethnicity: "Bengali",
+        
+        hobbies: "",
+        preferredContactMethod: "Email",
+        
+        partnerPreference: {
+          ageMin: 20,
+          ageMax: 40,
+          preferredLocations: [country || "Bangladesh"],
+          preferredEducation: "Graduate",
+          preferredProfession: "Professional",
+          religiousPreference: "Islam",
+          otherPreferences: (data as any).background || "Compatible match",
+          dealbreakers: "",
+        },
+      };
+
+      fetch(`${backendUrl}/matrimonial/profiles`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(matrimonyPayload),
+      }).catch(err => {
+        console.error("[lead-matrimony-error]", err);
       });
     } else if (data.formType !== "notify") {
       // For other form types, forward to contact/general
