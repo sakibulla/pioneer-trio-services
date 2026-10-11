@@ -103,9 +103,8 @@ export function ImmigrationAssessmentForm({ user }: ImmigrationAssessmentFormPro
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 90000); // 90 second timeout
       
-      // Submit directly to backend API (CORS enabled)
-      const backendUrl = "https://pioneer-backend-5qhe.onrender.com/api/v1";
-      const res = await fetch(`${backendUrl}/immigration/assessments`, {
+      // Submit to Next.js API route which handles transformation
+      const res = await fetch("/api/immigration/assessment", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),

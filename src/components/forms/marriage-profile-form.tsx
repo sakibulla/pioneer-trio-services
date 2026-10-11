@@ -138,9 +138,8 @@ export function MarriageProfileForm({ user }: MarriageProfileFormProps) {
         },
       };
 
-      // Submit to backend API using same URL as portal-api
-      const backendUrl = process.env.REACT_APP_BACKEND_API_URL || process.env.NEXT_PUBLIC_BACKEND_API_URL || "http://localhost:5000/api/v1";
-      const res = await fetch(`${backendUrl}/matrimonial/profiles`, {
+      // Submit to Next.js API route which handles backend communication
+      const res = await fetch("/api/marriage/profile", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(transformedData),
