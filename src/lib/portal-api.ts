@@ -1,7 +1,8 @@
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_API_URL || "http://localhost:5000/api/v1";
 
-// Track last refresh attempt to debounce
+// Track last refresh attempt to debounce and prevent concurrent refreshes
 let lastRefreshTime = 0;
+let refreshPromise: Promise<string | null> | null = null;
 const REFRESH_DEBOUNCE_MS = 5000; // Only refresh once per 5 seconds
 
 export interface AuthUser {
@@ -23,6 +24,11 @@ async function refreshTokenIfNeeded(): Promise<string | null> {
     return null;
   }
   
+  // If a refresh is already in-flight, return the same promise to avoid concurrent refreshes
+  if (refreshPromise) {
+    return refreshPromise;
+  }
+  
   // Skip refresh if we recently attempted one (debounce)
   const now = Date.now();
   if (now - lastRefreshTime < REFRESH_DEBOUNCE_MS) {
@@ -31,45 +37,52 @@ async function refreshTokenIfNeeded(): Promise<string | null> {
   
   lastRefreshTime = now;
   
-  try {
-    // Try to refresh the token with a short timeout
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 3000);
-    
-    const res = await fetch(`${BACKEND_URL}/auth/refresh`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ refreshToken }),
-      signal: controller.signal,
-    });
-    
-    clearTimeout(timeoutId);
-    
-    if (res.ok) {
-      const data = await res.json();
-      if (data.data?.accessToken) {
-        localStorage.setItem("pioneer_token", data.data.accessToken);
-        if (data.data.refreshToken) {
-          localStorage.setItem("pioneer_refresh_token", data.data.refreshToken);
+  // Create the refresh promise and store it
+  refreshPromise = (async () => {
+    try {
+      // Try to refresh the token with a short timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 3000);
+      
+      const res = await fetch(`${BACKEND_URL}/auth/refresh`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ refreshToken }),
+        signal: controller.signal,
+      });
+      
+      clearTimeout(timeoutId);
+      
+      if (res.ok) {
+        const data = await res.json();
+        if (data.data?.accessToken) {
+          localStorage.setItem("pioneer_token", data.data.accessToken);
+          if (data.data.refreshToken) {
+            localStorage.setItem("pioneer_refresh_token", data.data.refreshToken);
+          }
+          return data.data.accessToken;
         }
-        return data.data.accessToken;
+      } else if (res.status === 401) {
+        // Refresh token is invalid/expired - clear auth and return null
+        // This will force a re-login on the next auth call
+        console.warn("[refreshTokenIfNeeded] Refresh token expired, clearing auth");
+        localStorage.removeItem("pioneer_token");
+        localStorage.removeItem("pioneer_refresh_token");
+        localStorage.removeItem("pioneer_user");
+        return null;
       }
-    } else if (res.status === 401) {
-      // Refresh token is invalid/expired - clear auth and return null
-      // This will force a re-login on the next auth call
-      console.warn("[refreshTokenIfNeeded] Refresh token expired, clearing auth");
-      localStorage.removeItem("pioneer_token");
-      localStorage.removeItem("pioneer_refresh_token");
-      localStorage.removeItem("pioneer_user");
-      return null;
+      // For other errors, return existing token and let API fail naturally
+    } catch (err) {
+      // Network/timeout errors - return existing token to try the API call
     }
-    // For other errors, return existing token and let API fail naturally
-  } catch (err) {
-    // Network/timeout errors - return existing token to try the API call
-  }
+    
+    return token;
+  })().finally(() => {
+    // Clear the promise after it completes so new refreshes can be attempted
+    refreshPromise = null;
+  });
   
-  return token;
-}
+  return refreshPromise;
 
 export interface ClientCase {
   id: string;
@@ -563,8 +576,8 @@ export const portalApi = {
       const currentToken = await refreshTokenIfNeeded();
       const authToken = currentToken || token;
 
-      // PATCH /profiles/:id/status with status="APPROVED" (admin only)
-      const res = await fetch(`${BACKEND_URL}/matrimonial/profiles/${profileId}/status`, {
+      // Try unified /status endpoint first (new backend)
+      let res = await fetch(`${BACKEND_URL}/matrimonial/profiles/${profileId}/status`, {
         method: "PATCH",
         headers: {
           Authorization: `Bearer ${authToken}`,
@@ -572,6 +585,18 @@ export const portalApi = {
         },
         body: JSON.stringify({ status: "APPROVED" }),
       });
+
+      // Fallback to /approve endpoint if /status not found (legacy backend)
+      if (res.status === 404) {
+        console.warn("[approveProfile] /status endpoint not found, trying /approve fallback");
+        res = await fetch(`${BACKEND_URL}/matrimonial/profiles/${profileId}/approve`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+            "Content-Type": "application/json",
+          },
+        });
+      }
 
       if (!res.ok) {
         const error = await res.text();
@@ -591,8 +616,8 @@ export const portalApi = {
       const currentToken = await refreshTokenIfNeeded();
       const authToken = currentToken || token;
 
-      // PATCH /profiles/:id/status with status="REJECTED" and rejection details (admin only)
-      const res = await fetch(`${BACKEND_URL}/matrimonial/profiles/${profileId}/status`, {
+      // Try unified /status endpoint first (new backend)
+      let res = await fetch(`${BACKEND_URL}/matrimonial/profiles/${profileId}/status`, {
         method: "PATCH",
         headers: {
           Authorization: `Bearer ${authToken}`,
@@ -604,6 +629,19 @@ export const portalApi = {
           notes 
         }),
       });
+
+      // Fallback to /decline endpoint if /status not found (legacy backend)
+      if (res.status === 404) {
+        console.warn("[rejectProfile] /status endpoint not found, trying /decline fallback");
+        res = await fetch(`${BACKEND_URL}/matrimonial/profiles/${profileId}/decline`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ reasonCategory, notes }),
+        });
+      }
 
       if (!res.ok) {
         const error = await res.text();

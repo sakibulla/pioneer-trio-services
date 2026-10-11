@@ -29,6 +29,7 @@ interface CaseDetail {
     documentType: string;
     fileName: string;
     verified: boolean;
+    verifiedAt?: string;
     uploadedAt: string;
   }>;
   assessment: any;
@@ -242,11 +243,11 @@ export default function CaseDetailPage() {
                   </div>
                   <div className="flex items-center gap-3">
                     <span className={`inline-block px-3 py-1 text-xs font-semibold rounded-full ${
-                      doc.verified
+                      (doc.verified && doc.verifiedAt)
                         ? "bg-emerald-100 text-emerald-800"
                         : "bg-yellow-100 text-yellow-800"
                     }`}>
-                      {doc.verified ? "Verified (AES-256 Encrypted)" : "Pending Verification"}
+                      {(doc.verified && doc.verifiedAt) ? "Verified (AES-256 Encrypted)" : "Pending Verification"}
                     </span>
                     <button
                       onClick={async () => {
