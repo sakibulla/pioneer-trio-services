@@ -2,9 +2,9 @@
 
 ## Summary
 
-Five critical bugs and two medium-priority features were addressed across auth flows, profile management, case editing, and admin dashboard data loading. The implementation fixes Google OAuth initialization race conditions, corrects matrimonial profile endpoint paths, secures token logging, adds client case editability, and improves data fetching resilience. The build passes without TypeScript errors.
+Five critical bugs affecting authentication, profile management, and case workflows have been addressed through 7 commits totaling ~1,100 lines of changes. The fixes correct the Google OAuth button disappearing after logout, resolve 404 errors on matrimonial profile approval/rejection endpoints, add client case editability, improve token refresh concurrency, and harden authorization checks. Token substring logging has been removed from the frontend, though backend logging hygiene remains unverified. The build passes with no TypeScript errors.
 
-**Watch for:** Token logging removal is correct but shallow—verify server-side logging doesn't persist credentials. GSI button initialization requires manual testing to confirm visibility after logout. Client case edit modal lacks backend-side ownership verification and should remain locked to the current auth user. Admin profile approve/reject endpoints depend on backend `/status` PATCH route availability; implementation assumes route exists.
+**Watch for:** Google OAuth button visibility after logout requires manual testing — the fix uses a 100ms timeout heuristic that could fail on slow devices. Profile approval/rejection now assumes a backend PATCH `/status` endpoint exists; if the backend only has legacy `/approve` and `/decline` routes, the implementation includes fallback logic but should be verified before deploying. Client case editing lacks explicit backend-side ownership verification and relies entirely on middleware authorization. Token logging removal is frontend-only; audit backend OAuth endpoints to ensure they don't log credentials server-side.
 
 **Verdict**: NEEDS_CHANGES
 
@@ -12,104 +12,165 @@ Five critical bugs and two medium-priority features were addressed across auth f
 
 ## High-level view
 
-Token secrets are no longer logged to browser console; the fix removes substring logging while preserving generic debug messages. This reduces credential exposure but doesn't address backend logging hygiene—the build log confirms this is frontend-only.
+Google OAuth initialization has been restructured to load the GSI script once at mount and render the button only when unauthenticated, clearing stale state via `window.google.accounts.id.cancel()` before re-initialization. This prevents the button from disappearing after logout by decoupling script loading from auth state changes. The fix includes a 100ms timeout and retry fallback but silently fails if the client ID is misconfigured.
 
-Google OAuth button now splits initialization into two lifecycle phases: script loading happens once at mount, while button rendering depends on auth state. This prevents the button from vanishing after logout by properly resetting GSI state and re-rendering when auth clears. The fix includes retry logic with timeout fallback for robustness.
+Matrimonial profile approval and rejection now use a unified `PATCH /status` endpoint with explicit status payloads instead of separate POST routes. Both operations include fallback logic that retries with legacy `/approve` and `/decline` routes if the new endpoint returns 404, providing backward compatibility. This aligns with the existing immigration case status pattern and reduces endpoint fragmentation, though the fallback assumes both old and new endpoints won't coexist.
 
-Matrimonial profile approval and rejection now use a unified `/status` endpoint with PATCH instead of separate `/approve` and `/decline` POST routes. The payload includes status enum and rejection metadata (reason, notes). This aligns with the existing immigration case status update pattern and should reduce endpoint fragmentation.
+Token refresh now implements a promise-based singleton pattern to prevent concurrent refreshes from multiple simultaneous API calls. The existing 5-second debounce is preserved, but in-flight refreshes are deduplicated — new requests while a refresh is running will await the same promise instead of starting a new one. This mitigates the tab-concurrency race condition where multiple requests could all see stale `lastRefreshTime` and skip refresh.
 
-Client case editing is now possible via a modal form that validates required fields and re-fetches the case after successful updates. The form prevents submission without destination country and application type; it optimistically updates the UI and falls back gracefully if refresh fails. The edit modal is user-facing but lacks explicit backend-side ownership checks—the implementation assumes the backend enforces authorization.
+Client case editing is now possible through a modal form that validates required fields (destination country, application type) and re-fetches the full case after update to ensure UI reflects backend state. The modal attempts to detect concurrent edits via a `_version` field in the payload and gracefully refreshes if conflict is detected. Crucially, the frontend includes an auth check but the implementation depends entirely on the backend enforcing ownership via middleware — if backend doesn't verify the case belongs to the user, any authenticated user could edit any case by guessing the ID.
 
-Admin dashboard data loading uses `Promise.allSettled` to continue loading cases, leads, and profiles even if one API call fails. This improves reliability when the backend is partially degraded, though it masks failures in the console and doesn't surface which endpoint failed to the admin.
+Admin dashboard data loading switched from `Promise.all` to `Promise.allSettled`, allowing partial failure when one API endpoint is down. Failed requests are tracked in a `dataErrors` object but failures are not surfaced in the UI — an admin sees empty data with no indication that an endpoint failed rather than having no data to display.
+
+Token substring logging (`accessToken.substring(0, 20)`) has been removed from the login flow, reducing console credential exposure. Frontend logs no longer persist tokens, but this assumes the backend doesn't log credentials in auth endpoint logs — the fix is surface-level and depends on backend logging hygiene outside the scope of this review.
 
 ---
 
 <details>
-<summary>Issues (6)</summary>
+<summary>Issues (7)</summary>
 
-1. **Missing backend ownership check** — CaseEditModal updates cases without confirming the case belongs to the current user. Relies entirely on backend authorization middleware. If backend doesn't enforce ownership, any authenticated user could edit any case.
+1. **Google OAuth initialization timeout is heuristic** — The 100ms delay before checking if the button element exists in DOM is a guess. On slow devices, under heavy JavaScript load, or with lazy-loaded stylesheets, the element might not be ready in 100ms. Silent failure with no error message or fallback.
 
-2. **Unified endpoint assumes backend support** — approveProfile and rejectProfile both call `PATCH /status` endpoint. If backend only has `/approve` and `/decline` routes, both operations will 404. No fallback or version detection exists.
+2. **Profile endpoint unification assumes backend support** — Both `approveProfile` and `rejectProfile` call `PATCH /status` first with fallback to legacy `/approve` and `/decline` routes. Implementation assumes at most one endpoint set exists; if backend has both new and legacy routes, inconsistent behavior could result. Endpoint availability must be verified before deployment.
 
-3. **Token logging reduction is incomplete** — Removed console.log of token substring from frontend, but this assumes server-side logging doesn't persist credentials. Backend OAuth/auth endpoint may still log tokens. Frontend fix alone is insufficient for full credential security.
+3. **Missing backend ownership check in case editing** — `CaseEditModal` includes a frontend auth state check but no verification that the case belongs to the current user. If backend doesn't enforce `requireCaseOwnership` middleware on the PATCH endpoint, any authenticated user could edit any case by modifying the `caseData.id`. Frontend check is defense-in-depth only; backend must enforce ownership.
 
-4. **GSI button retry logic may mask configuration errors** — When button fails to initialize, code retries after 200ms timeout. If `NEXT_PUBLIC_GOOGLE_CLIENT_ID` is missing or invalid, retry will also fail silently and user sees blank space instead of error message.
+4. **Concurrent case edit race condition not fully addressed** — Modal includes `_version` field for optimistic locking but conflict detection logic only checks if error message contains "version" or "conflict". If backend doesn't return these keywords or uses a different error format, conflicts go undetected and later refresh overwrites the in-flight edit.
 
-5. **Admin dashboard partial failure is silent** — Promise.allSettled masks which API endpoint failed. If cases load but leads fail, admin sees incomplete data with no indication of the problem. Consider adding failed-endpoint indicators to the UI.
+5. **Admin dashboard failures silent to end-user** — `Promise.allSettled` with `dataErrors` object tracks which API failed, but `dataErrors` is created in state and not rendered in the UI. Admin sees empty cases/leads/profiles list with no indication that the endpoint failed versus having no data. Error state should be displayed with a warning badge or toast message.
 
-6. **Race condition potential in concurrent case edits** — If client submits case edit while another edit is in-flight, the re-fetch after first edit completes may override in-flight changes. No optimistic locking or server-side conflict detection.
+6. **Token logging reduction incomplete** — Frontend no longer logs token substrings, but backend OAuth endpoints (`/auth/login`, `/auth/google`, `/auth/refresh`) are outside the scope of this review. Backend logging audit needed to ensure credentials aren't persisted in server-side logs; frontend fix alone is insufficient.
+
+7. **GSI initialization missing error messaging for misconfiguration** — If `NEXT_PUBLIC_GOOGLE_CLIENT_ID` is missing or invalid, the button silently fails to render with only a console warning. Admins may not see console messages. Should display a visible error message or fallback login method.
 
 </details>
 
 <details>
 <summary>Details</summary>
 
-### Profile Endpoint Consolidation (approveProfile, rejectProfile)
+### Google OAuth Button Lifecycle: Split Effects
 
-Both methods use `PATCH /matrimonial/profiles/{id}/status` with `{ status: "APPROVED" | "REJECTED", reasonCategory?, notes? }`, mirroring the `updateCaseStatus` pattern. The implementation depends entirely on the backend having a `/status` endpoint. If the backend still registers `/approve` and `/decline` routes, both operations will 404 with no fallback. Backend endpoint existence must be verified before deploying.
+The original single `useEffect` hook with dependency `[user, token]` caused the button to vanish after logout because Google's GSI library doesn't handle re-mounting well — when auth state cleared, the effect re-ran and attempted to reinitialize the script that was already loaded, causing rendering to fail.
 
-### Google OAuth Button Initialization (portal/page.tsx)
+The fix splits into two effects:
+- First effect (no dependencies, runs once at mount): Loads the GSI script or checks if already loaded, setting `gsiInitializedRef.current = true`
+- Second effect (depends on `[user, token]`): Runs when auth state changes; if not authenticated, clears previous state with `window.google.accounts.id.cancel()`, then calls `renderButton()` to initialize fresh
 
-The fix splits GSI initialization into two effects: first (empty dependency) loads the script once at mount; second (depends on `[user, token]`) renders the button only when not authenticated, calling `window.google.accounts.id.cancel()` before re-initializing to clear stale state. Includes 100ms delay and 200ms timeout fallback if button element not found. The two-effect pattern correctly prevents re-mounting on every render and avoids the original disappearing-button race condition. Requires manual testing to verify button appears after logout.
+The button div is cleared with `btn.innerHTML = ""` before re-rendering to prevent stale button state. The code includes a 100ms timeout before attempting to render, waiting for the DOM element to exist.
 
-**Limitation:** If `NEXT_PUBLIC_GOOGLE_CLIENT_ID` is missing or invalid, initialization fails silently and the button div remains empty. User sees blank space with no indication of misconfiguration.
+**Concern:** The 100ms timeout is empirical, not defensive. On a slow device with network congestion or heavy JavaScript load, the element may not be in the DOM after 100ms. The retry logic uses another 200ms timeout but still doesn't log errors if element remains missing — just silently exits the effect. Manual testing on a range of devices is critical before deploying.
 
-### Token Logging Removal (portal/page.tsx, portal-api.ts)
+**Concern:** If `NEXT_PUBLIC_GOOGLE_CLIENT_ID` is missing or invalid, the code logs a warning to console but renders nothing visible to the user. On a deployed instance where admins don't check browser console, the login form would silently be unusable.
 
-Removed console.log statements that logged token substrings. Frontend fix is necessary but insufficient—backend OAuth endpoints (`/auth/login`, `/auth/google`, `/auth/refresh`) may log full tokens in server-side logs. The build log characterizes this as SEC-1 (security fix) but only addresses frontend. Recommend auditing backend logging hygiene before considering the security issue fully resolved.
+### Token Refresh Deduplication: Promise Singleton
 
-Portal-api.ts still logs response data in several methods (getMyCases, getAllCases, etc.). These don't expose credentials but do log method names and structure. Acceptable for debugging; consider removing in production builds.
+The `refreshTokenIfNeeded()` function previously used only a timestamp (`lastRefreshTime`) to debounce refresh attempts to once per 5 seconds. Under concurrent load (e.g., multiple API calls in rapid succession), the race condition was: request A checks `lastRefreshTime`, sees it's stale, but before the refresh completes, request B also checks the same timestamp, also thinks it's stale, and starts a second refresh. Both requests could run concurrently.
 
-### Case Edit Modal (CaseEditModal.tsx, ClientDashboard integration)
+The fix stores a `refreshPromise` in module scope. If refresh is in-flight when a new request calls `refreshTokenIfNeeded()`, it returns the same promise instead of starting a new refresh. After the promise settles, `refreshPromise` is cleared (via `.finally()`) so subsequent refresh attempts after the debounce window can proceed.
 
-New component allows clients to edit submitted immigration cases. Form validates `destinationCountry` (required) and `applicationType` (required); optional `specificProgram` field. On save, calls `updateCase()` then re-fetches via `getMyCases()` to refresh UI, with optimistic fallback if refresh fails.
+This is correct and follows the singleton pattern. The 5-second debounce remains in place. Concurrent requests during the debounce window will now properly deduplicate instead of spinning up multiple refresh attempts.
 
-**Concern:** Lacks backend-side ownership verification. Relies entirely on backend enforcing authorization middleware. If backend doesn't verify the case belongs to the current user, any authenticated user could edit any case by changing the `caseData.id` in the request.
+**Verified:** The code wraps the refresh logic in an async IIFE, captures it in `refreshPromise`, and clears it after completion. This prevents concurrent refresh race conditions.
 
-### Admin Dashboard Data Loading (AdminDashboard.tsx)
+### Matrimonial Profile Approval/Rejection: Unified Endpoint with Fallback
 
-Uses `Promise.allSettled` instead of `Promise.all` to continue loading cases, leads, and profiles even if one API call fails. Each result is checked via `.status === 'fulfilled'` before accessing `.value`. Failed requests fall back to `{ data: [] }`. This is more resilient than `Promise.all` when the backend is partially degraded.
+Both `approveProfile` and `rejectProfile` now call `PATCH /matrimonial/profiles/{id}/status` first:
+- `approveProfile` sends `{ status: "APPROVED" }`
+- `rejectProfile` sends `{ status: "REJECTED", reasonCategory, notes }`
 
-**Limitation:** Failure is completely silent. Admin has no way to know if empty data is because there's nothing to display or because the API failed. Recommend adding visual indicators (warning badges, error messages) for failed endpoints.
+If the new endpoint returns 404, both functions retry with legacy routes:
+- `approveProfile` falls back to `POST /approve`
+- `rejectProfile` falls back to `POST /decline`
 
-### Case Update API (portal-api.ts updateCase method)
+This design assumes the backend will eventually move to the unified `/status` endpoint, but for now supports both old and new versions.
 
-New method sends `PATCH /immigration/cases/{id}` with update payload, calls `refreshTokenIfNeeded()` before request, and returns `{ success: true/false, data, error }`. Follows existing patterns and is straightforward.
+**Concern:** If the backend has both endpoints and they have different behavior (e.g., `/status` validates notes length, `/decline` doesn't), the fallback will mask this — the operation succeeds via fallback but may behave differently than intended. Backend route clarity is needed before deployment.
 
-### Case Re-fetch After Edit (CaseEditModal)
+**Verified:** Fallback logic is sound — 404 detection and retry with correct method and payload structure for each route.
 
-After successful update, modal calls `getMyCases()` then finds the updated case by ID. This ensures UI reflects backend state. Minor inefficiency: re-fetches all cases instead of just the one being edited. Consider adding a dedicated `getCaseById()` method in future.
+### Client Case Editing: Frontend Ownership Check Only
 
-### Token Refresh Debounce (portal-api.ts)
+New `CaseEditModal` component allows authenticated clients to edit submitted immigration cases. Form validates that `destinationCountry` and `applicationType` are not empty; `specificProgram` is optional. On save, calls `portalApi.updateCase()` with the updated payload, then re-fetches all cases via `portalApi.getMyCases()` and updates the UI with the refreshed case.
 
-Existing code maintains `lastRefreshTime` to debounce refresh to once per 5 seconds. Concurrent requests from multiple tabs could all skip refresh and use an expired token. This issue exists in the baseline and is not changed by this review.
+The modal includes a frontend check: if `currentUser` is falsy, it rejects the save with "Authentication required." However, this is a UI-level check. The backend receives the request with an Authorization header (the token), and then must verify that the case ID belongs to the authenticated user. If the backend middleware is misconfigured or doesn't perform this check, any authenticated user could PATCH any case by guessing the caseId.
 
-### Document Upload & Verification
+**Risk:** Direct Object Reference (IDOR) vulnerability if backend authorization is misconfigured. Frontend check provides defense-in-depth but is not sufficient.
 
-Build log mentions document verification UI was added in earlier commits. This review doesn't cover document handling changes directly.
+**Verified:** Modal always calls `updateCase()` with the full case ID from `caseData.id`. No filtering or masking of IDs. Ownership verification must occur server-side.
+
+### Case Version/Conflict Detection
+
+The modal includes a `_version` field when calling `updateCase()`, intended for optimistic locking. After the update, if the error message includes "version" or "conflict", the modal treats it as a concurrent-edit conflict, re-fetches the case, and updates the UI.
+
+**Concern:** Error message detection is fragile. If the backend uses a different error message format (e.g., "concurrent update" instead of "conflict"), the conflict goes undetected and the modal shows a generic error. Conflict resolution depends on exact error message wording.
+
+**Verification gap:** No way to verify backend actually sends these error messages without inspecting the backend code or testing against a live backend.
+
+### Case Re-fetch After Edit
+
+After a successful update, the modal calls `portalApi.getMyCases(token)` to fetch all cases, finds the updated case by ID, and passes it to `onSave()`. This ensures the UI reflects whatever the backend actually stored — if the backend truncates, transforms, or rejects some fields, the UI will show the final state.
+
+**Minor inefficiency:** Re-fetches all cases instead of just the one being edited. Could be optimized with a dedicated `getCaseById()` method, but this design is safe and simplifies state management.
+
+### Admin Dashboard Resilience
+
+Changed data loading from `Promise.all()` to `Promise.allSettled()`. This means if the leads API endpoint fails, cases and profiles will still load instead of the entire dashboard failing.
+
+Failed requests are tracked in `dataErrors` object keyed by endpoint name (cases, leads, profiles). However, this state is not currently rendered in the UI. An admin will see empty tables with no indication that an endpoint failed versus having no data. The error messages exist in state but are silently swallowed.
+
+**Recommendation:** Render the `dataErrors` in the UI with a warning badge or inline error message for each tab so admins know when data is stale or missing.
+
+### Token Logging Removal
+
+Removed console.log statements that previously logged:
+```javascript
+console.log("[Portal] accessToken:", res.data.accessToken?.substring(0, 20) + "...");
+console.log("[Portal] refreshToken:", res.data.refreshToken?.substring(0, 20) + "...");
+```
+
+Replaced with:
+```javascript
+console.log("[Portal] Login successful");
+```
+
+Even the first 20 characters of a JWT can be used for analysis or phishing. Removing token logging from the frontend is correct.
+
+**Scope limitation:** This review covers only frontend logging. Backend OAuth endpoints (`/auth/login`, `/auth/google`, `/auth/refresh`) may log full tokens in server-side logs, and this is outside the scope of the frontend-focused changes. Recommend auditing backend logging separately before considering the security issue fully resolved.
+
+### Build Verification
+
+The build completes successfully with no TypeScript errors. All route definitions are generated, and static pages compile without warnings. The generated routes include dynamic segments like `/admin/cases/[id]` and `/portal/cases/[id]`, confirming the new case detail routes are registered.
 
 </details>
 
 <details>
 <summary>File map</summary>
 
-- `src/app/portal/page.tsx` — Refactored GSI (Google Sign-In) initialization into two effects (script load once, button render on auth change). Removed token substring logging. Added console warnings and retry logic for button not found.
+- `src/app/portal/page.tsx` — Split GSI initialization into two effects; removed token substring logging; added retry logic with 100ms timeout and 200ms fallback
+- `src/lib/portal-api.ts` — Implemented token refresh promise deduplication; added `updateCase()` method; changed `approveProfile` and `rejectProfile` to use `/status` endpoint with fallback to legacy routes; added security comment about backend logging
+- `src/components/portal/CaseEditModal.tsx` — New component for client case editing with required field validation, version-based conflict detection, and case re-fetch after update
+- `src/components/portal/ClientDashboard.tsx` — Integrated case edit modal when case status is SUBMITTED; passes `currentUser` to modal for ownership check
+- `src/components/portal/AdminDashboard.tsx` — Changed to `Promise.allSettled` for resilient partial data loading; tracks failures in `dataErrors` but does not yet render them to UI
+- `src/app/api/lead/route.ts` — Uses env variable for backend URL (consistency with assessment route, not shown in diff but noted in plan)
+- Build outputs and task files (not functional code)
 
-- `src/lib/portal-api.ts` — Updated `approveProfile` and `rejectProfile` to use `PATCH /status` endpoint instead of `/approve` and `/decline`. Added `updateCase` method for client case edits. Added `Promise.allSettled` resilience pattern in admin methods.
-
-- `src/components/portal/CaseEditModal.tsx` — New component for editing client cases. Validates required fields (destinationCountry, applicationType), re-fetches after update, falls back to optimistic update on refresh failure.
-
-- `src/components/portal/ClientDashboard.tsx` — Integrated edit button for SUBMITTED status cases. Passes case data and callbacks to CaseEditModal.
-
-- `src/app/admin/cases/[id]/page.tsx` — Minor change (1 line diff, not shown in full) affecting case detail page; likely related to status update or document handling.
-
-- `.agents/tasks/review-plan.md` — Implementation plan document (not code).
-
-- `.agents/tasks/fix-build.txt` — Build log confirming no TypeScript errors (not code).
-
-- `.agents/tasks/fix-review.md` — Prior review document (not applicable to current review).
-
-**Full diff:** `git show 039cf47..6375adb`
+**Full diff range:** `git diff origin/main HEAD` spans 7 commits from `039cf47` (remove .env from git) through `7fa5f22` (address review findings)
 
 </details>
+
+---
+
+## Recommendations
+
+1. **Manual test:** Load the portal in a browser, log in with Google, then log out. Verify the Google button appears after logout (watch for blank space where button should be). Test on a slow device or with network throttling to verify the 100ms timeout is sufficient.
+
+2. **Verify backend endpoints:** Confirm that `/matrimonial/profiles/{id}/status` PATCH endpoint exists and accepts `{ status, reasonCategory?, notes? }` payload. If only legacy routes exist, the fallback will handle it, but document the backend endpoint situation clearly.
+
+3. **Backend ownership check:** Inspect backend authorization middleware to confirm it validates that the case/profile being updated belongs to the authenticated user. Frontend check is insufficient.
+
+4. **Backend logging audit:** Review server-side logs for `/auth/login`, `/auth/google`, `/auth/refresh` endpoints to ensure tokens are not logged.
+
+5. **Admin dashboard error UI:** Render `dataErrors` state in the admin dashboard so admins can see which APIs failed instead of seeing empty data without context.
+
+6. **Conflict detection robustness:** Coordinate with backend on exact error message format for version conflicts so the modal's conflict detection doesn't miss them due to message string differences.
 

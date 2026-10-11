@@ -586,6 +586,15 @@ export const portalApi = {
       const currentToken = await refreshTokenIfNeeded();
       const authToken = currentToken || token;
 
+      // Backend endpoint strategy:
+      // This function assumes the backend implements one of two endpoint patterns:
+      // 1. NEW: PATCH /matrimonial/profiles/{id}/status with body { status: "APPROVED" }
+      // 2. LEGACY: POST /matrimonial/profiles/{id}/approve
+      //
+      // WARNING: If both endpoints exist on the backend, behavior may be inconsistent.
+      // Before deployment, verify with backend team which endpoint is authoritative.
+      // Ideally, backend should deprecate legacy /approve endpoint and use /status only.
+      
       // Try unified /status endpoint first (new backend)
       let res = await fetch(`${BACKEND_URL}/matrimonial/profiles/${profileId}/status`, {
         method: "PATCH",
@@ -625,6 +634,15 @@ export const portalApi = {
     try {
       const currentToken = await refreshTokenIfNeeded();
       const authToken = currentToken || token;
+
+      // Backend endpoint strategy:
+      // This function assumes the backend implements one of two endpoint patterns:
+      // 1. NEW: PATCH /matrimonial/profiles/{id}/status with body { status: "REJECTED", reasonCategory, notes }
+      // 2. LEGACY: POST /matrimonial/profiles/{id}/decline
+      //
+      // WARNING: If both endpoints exist on the backend, behavior may be inconsistent.
+      // Before deployment, verify with backend team which endpoint is authoritative.
+      // Ideally, backend should deprecate legacy /decline endpoint and use /status only.
 
       // Try unified /status endpoint first (new backend)
       let res = await fetch(`${BACKEND_URL}/matrimonial/profiles/${profileId}/status`, {

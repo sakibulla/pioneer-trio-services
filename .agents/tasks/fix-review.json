@@ -3,51 +3,45 @@
   "findings": [
     {
       "id": 1,
-      "title": "Missing backend ownership check",
+      "label": "Google OAuth timeout heuristic could fail on slow devices",
       "severity": "HIGH",
-      "description": "CaseEditModal updates cases without confirming the case belongs to the current user. Relies entirely on backend authorization middleware. If backend doesn't enforce ownership, any authenticated user could edit any case.",
-      "files": ["src/components/portal/CaseEditModal.tsx", "src/lib/portal-api.ts"],
-      "recommendation": "Verify backend enforces requireCaseOwnership middleware. Add frontend-side assertion before edit is allowed."
+      "description": "100ms timeout before checking if GSI button element exists in DOM is not defensive. On slow devices or under JavaScript load, element may not be ready, causing silent rendering failure with no error message or fallback."
     },
     {
       "id": 2,
-      "title": "Unified endpoint assumes backend support",
+      "label": "Profile endpoint unification assumes backend support",
       "severity": "HIGH",
-      "description": "approveProfile and rejectProfile both call PATCH /status endpoint. If backend only has /approve and /decline routes, both operations will 404. No fallback or version detection exists.",
-      "files": ["src/lib/portal-api.ts"],
-      "recommendation": "Verify backend has PATCH /matrimonial/profiles/{id}/status endpoint before deploying. If not, implement fallback to POST /approve and POST /decline routes."
+      "description": "Both approveProfile and rejectProfile now call PATCH /status with fallback to legacy routes. If backend has both endpoints, inconsistent behavior could result. Backend endpoint availability must be verified before deployment."
     },
     {
       "id": 3,
-      "title": "Token logging reduction is incomplete",
+      "label": "Missing backend ownership verification on case edit",
       "severity": "HIGH",
-      "description": "Removed console.log of token substring from frontend, but this assumes server-side logging doesn't persist credentials. Backend OAuth/auth endpoint may still log tokens. Frontend fix alone is insufficient for full credential security.",
-      "files": ["src/app/portal/page.tsx", "src/lib/portal-api.ts"],
-      "recommendation": "Audit backend logging for all auth endpoints (/auth/login, /auth/google, /auth/refresh). Ensure no tokens are logged server-side."
+      "description": "CaseEditModal checks frontend auth state but relies entirely on backend to verify case ownership. If backend doesn't enforce ownership middleware, any authenticated user could edit any case via IDOR."
     },
     {
       "id": 4,
-      "title": "GSI button retry logic may mask configuration errors",
+      "label": "Concurrent case edit conflict detection is fragile",
       "severity": "MEDIUM",
-      "description": "When button fails to initialize, code retries after 200ms timeout. If NEXT_PUBLIC_GOOGLE_CLIENT_ID is missing or invalid, retry will also fail silently and user sees blank space instead of error message.",
-      "files": ["src/app/portal/page.tsx"],
-      "recommendation": "Add explicit error message or warning if GSI initialization fails after retry. Log to console or show UI alert to admin."
+      "description": "Conflict detection checks if error message contains 'version' or 'conflict'. If backend uses different wording, conflicts go undetected and overwrites conflict resolution."
     },
     {
       "id": 5,
-      "title": "Admin dashboard partial failure is silent",
+      "label": "Admin dashboard API failures not surfaced in UI",
       "severity": "MEDIUM",
-      "description": "Promise.allSettled masks which API endpoint failed. If cases load but leads fail, admin sees incomplete data with no indication of the problem.",
-      "files": ["src/components/portal/AdminDashboard.tsx"],
-      "recommendation": "Add visual indicators (warning badges, error messages) for failed endpoints in admin dashboard UI."
+      "description": "Promise.allSettled tracks failed APIs in dataErrors object but doesn't render them. Admin sees empty data with no indication whether endpoint failed or data doesn't exist."
     },
     {
       "id": 6,
-      "title": "Race condition potential in concurrent case edits",
+      "label": "Token logging removal incomplete",
+      "severity": "HIGH",
+      "description": "Frontend no longer logs token substrings, but backend OAuth endpoints may still log full tokens server-side. Frontend fix is necessary but insufficient; backend logging audit required."
+    },
+    {
+      "id": 7,
+      "label": "GSI initialization error handling missing",
       "severity": "MEDIUM",
-      "description": "If client submits case edit while another edit is in-flight, the re-fetch after first edit completes may override in-flight changes. No optimistic locking or server-side conflict detection.",
-      "files": ["src/components/portal/CaseEditModal.tsx"],
-      "recommendation": "Add server-side conflict detection or implement optimistic locking with version/timestamp validation."
+      "description": "If NEXT_PUBLIC_GOOGLE_CLIENT_ID is missing or invalid, button silently fails with only a console warning. Admins may not see console; should display visible error or fallback."
     }
   ],
   "reviewDoc": "e:\\Sakib project\\Pioneer\\pioneer-trio-services\\.agents\\tasks\\fix-review.md"

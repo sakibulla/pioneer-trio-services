@@ -26,7 +26,9 @@ export function CaseEditModal({ caseData, isOpen, onClose, onSave, token, curren
     setError("");
 
     // Frontend ownership check: verify current user is the case owner
-    // Note: Backend MUST also verify ownership. This is a defense-in-depth check.
+    // SECURITY: Backend MUST also verify ownership via requireCaseOwnership middleware
+    // to prevent IDOR (Insecure Direct Object Reference) attacks.
+    // This check alone is insufficient; it's a defense-in-depth layer.
     if (!currentUser) {
       setError("Authentication required. Please log in again.");
       return;
@@ -75,7 +77,17 @@ export function CaseEditModal({ caseData, isOpen, onClose, onSave, token, curren
         alert("Case updated successfully");
       } else {
         // Check if error is due to version conflict (concurrent edit)
-        if (result.error?.includes("version") || result.error?.includes("conflict")) {
+        // Note: Conflict detection relies on backend error message format.
+        // If backend changes error messages, this detection may fail silently.
+        // Improve by checking both lowercase and error code fields when available.
+        const errorStr = String(result.error || "").toLowerCase();
+        const isConflict = 
+          errorStr.includes("version") || 
+          errorStr.includes("conflict") ||
+          errorStr.includes("concurrent") ||
+          errorStr.includes("outdated");
+        
+        if (isConflict) {
           setError("This case was modified by another session. Refreshing...");
           const refreshedCases = await portalApi.getMyCases(token);
           const refreshedCase = refreshedCases?.data?.find((c: ClientCase) => c.id === caseData.id);

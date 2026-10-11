@@ -85,7 +85,17 @@ export default function ClientPortalPage() {
     
     if (typeof window === "undefined") return;
     
-    const initializeGSI = () => {
+    // Validate Google Client ID is configured
+    const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+    if (!clientId) {
+      console.error("[GSI] NEXT_PUBLIC_GOOGLE_CLIENT_ID is not configured. Google button will not appear.");
+      // TODO: Add visible error UI banner for admins to see this configuration issue
+      return;
+    }
+    
+    const initializeGSI = (attempt = 0) => {
+      const maxAttempts = 5; // Exponential backoff: 100ms, 200ms, 400ms, 800ms, 1600ms = 3.1s total
+      
       if (window.google?.accounts?.id) {
         // Clear any previous initialization
         try {
@@ -96,7 +106,7 @@ export default function ClientPortalPage() {
         
         // Initialize GSI
         window.google.accounts.id.initialize({
-          client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "",
+          client_id: clientId,
           callback: handleGoogleSignIn,
         });
         
@@ -110,30 +120,36 @@ export default function ClientPortalPage() {
             text: "signin_with",
           });
         } else {
-          console.warn("[GSI] Button element not found in DOM after 100ms timeout");
+          // Retry with exponential backoff if button not found
+          if (attempt < maxAttempts) {
+            const nextDelay = Math.pow(2, attempt) * 100; // 100, 200, 400, 800, 1600ms
+            console.warn(`[GSI] Button element not found, retrying in ${nextDelay}ms (attempt ${attempt + 1}/${maxAttempts})`);
+            setTimeout(() => initializeGSI(attempt + 1), nextDelay);
+          } else {
+            console.error(`[GSI] Button element #google-signin-btn not found after ${maxAttempts} retries. Check HTML structure.`);
+            // TODO: Add visible error UI if GSI button cannot be rendered
+          }
         }
       } else {
-        // Google library not loaded - check if client ID is configured
-        if (!process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID) {
-          console.error("[GSI] NEXT_PUBLIC_GOOGLE_CLIENT_ID is not configured. Google button will not appear.");
+        // Google library not loaded yet, retry with exponential backoff
+        if (attempt < maxAttempts) {
+          const nextDelay = Math.pow(2, attempt) * 100;
+          console.warn(`[GSI] Google accounts library not ready, retrying in ${nextDelay}ms (attempt ${attempt + 1}/${maxAttempts})`);
+          setTimeout(() => initializeGSI(attempt + 1), nextDelay);
         } else {
-          console.warn("[GSI] Google accounts library not ready");
+          console.error(`[GSI] Google accounts library failed to load after ${maxAttempts} retries. Check network and script loading.`);
+          // TODO: Add visible error UI if GSI library fails to load
         }
       }
     };
     
-    // Delay slightly to ensure button element is in DOM, with retry fallback
-    const timer = setTimeout(() => {
-      const btn = document.getElementById("google-signin-btn");
-      if (!btn) {
-        console.warn("[GSI] Button element not found, will retry");
-        const retryTimer = setTimeout(initializeGSI, 200);
-        return () => clearTimeout(retryTimer);
-      }
-      initializeGSI();
-    }, 100);
+    // Start initialization with first attempt
+    initializeGSI(0);
     
-    return () => clearTimeout(timer);
+    // Cleanup function - no specific cleanup needed as GSI doesn't expose a destroy method
+    return () => {
+      // Silence any pending retries on unmount
+    };
   }, [user, token]); // Re-run when auth state changes
 
   const handleAuthSubmit = async (e: React.FormEvent) => {
