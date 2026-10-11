@@ -22,6 +22,18 @@ export function CaseEditModal({ caseData, isOpen, onClose, onSave, token }: Case
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+
+    // Validate required fields
+    if (!destinationCountry.trim()) {
+      setError("Destination Country is required");
+      return;
+    }
+
+    if (!applicationType.trim()) {
+      setError("Application Type is required");
+      return;
+    }
+
     setSaving(true);
 
     try {
@@ -32,11 +44,20 @@ export function CaseEditModal({ caseData, isOpen, onClose, onSave, token }: Case
       });
 
       if (result.success) {
-        onSave({
-          ...caseData,
-          destinationCountry,
-          applicationType,
-        });
+        // Re-fetch the case to ensure UI state matches backend
+        const refreshedCase = await portalApi.getMyCases(token);
+        const updatedCase = refreshedCase?.data?.find((c: ClientCase) => c.id === caseData.id);
+        
+        if (updatedCase) {
+          onSave(updatedCase);
+        } else {
+          // Fallback if refresh fails
+          onSave({
+            ...caseData,
+            destinationCountry,
+            applicationType,
+          });
+        }
         onClose();
         alert("Case updated successfully");
       } else {
@@ -75,7 +96,7 @@ export function CaseEditModal({ caseData, isOpen, onClose, onSave, token }: Case
 
           <div>
             <label className="block text-sm font-semibold text-stone-700 mb-2">
-              Destination Country
+              Destination Country <span className="text-red-600">*</span>
             </label>
             <input
               type="text"
@@ -83,17 +104,19 @@ export function CaseEditModal({ caseData, isOpen, onClose, onSave, token }: Case
               onChange={(e) => setDestinationCountry(e.target.value)}
               className="w-full px-3 py-2 border border-stone-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-immigration-500"
               placeholder="e.g., Canada"
+              required
             />
           </div>
 
           <div>
             <label className="block text-sm font-semibold text-stone-700 mb-2">
-              Application Type
+              Application Type <span className="text-red-600">*</span>
             </label>
             <select
               value={applicationType}
               onChange={(e) => setApplicationType(e.target.value)}
               className="w-full px-3 py-2 border border-stone-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-immigration-500"
+              required
             >
               <option value="">Select application type</option>
               <option value="Study Permit">Study Permit</option>

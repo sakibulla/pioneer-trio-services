@@ -109,12 +109,24 @@ export default function ClientPortalPage() {
             size: "large",
             text: "signin_with",
           });
+        } else {
+          console.warn("[GSI] Button element not found in DOM after 100ms timeout");
         }
+      } else {
+        console.warn("[GSI] Google accounts library not ready");
       }
     };
     
-    // Delay slightly to ensure button element is in DOM
-    const timer = setTimeout(initializeGSI, 100);
+    // Delay slightly to ensure button element is in DOM, with retry fallback
+    const timer = setTimeout(() => {
+      const btn = document.getElementById("google-signin-btn");
+      if (!btn) {
+        console.warn("[GSI] Button element not found, will retry");
+        const retryTimer = setTimeout(initializeGSI, 200);
+        return () => clearTimeout(retryTimer);
+      }
+      initializeGSI();
+    }, 100);
     
     return () => clearTimeout(timer);
   }, [user, token]); // Re-run when auth state changes
@@ -127,11 +139,8 @@ export default function ClientPortalPage() {
     try {
       if (isLoginView) {
         const res = await portalApi.login(email, password);
-        console.log("[Portal] Login response:", res);
         if (res?.success && res.data?.accessToken) {
-          console.log("[Portal] Login successful, storing tokens");
-          console.log("[Portal] accessToken:", res.data.accessToken?.substring(0, 20) + "...");
-          console.log("[Portal] refreshToken:", res.data.refreshToken?.substring(0, 20) + "...");
+          console.log("[Portal] Login successful");
           portalApi.setToken(res.data.accessToken, res.data.user, res.data.refreshToken);
           setToken(res.data.accessToken);
           setUser(res.data.user);

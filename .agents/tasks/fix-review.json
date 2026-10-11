@@ -1,0 +1,36 @@
+{
+  "verdict": "CHANGES_REQUESTED",
+  "findings": [
+    {
+      "id": 1,
+      "label": "Security: Token substrings logged to console",
+      "severity": "HIGH",
+      "description": "Lines 131-133 in portal/page.tsx log accessToken and refreshToken substrings to browser console. Even the first 20 characters of a JWT can be useful for phishing attacks. Remove these console.log statements entirely."
+    },
+    {
+      "id": 2,
+      "label": "Authorization: Case edit lacks owner verification",
+      "severity": "HIGH",
+      "description": "The updateCase endpoint relies only on backend middleware (requireCaseOwnership) for authorization checks. If the middleware misconfigures or is bypassed, clients could edit cases they don't own via direct object reference. Add frontend-level validation that the case belongs to the current user."
+    },
+    {
+      "id": 3,
+      "label": "Validation: Case edit accepts empty fields",
+      "severity": "MEDIUM",
+      "description": "CaseEditModal has no client-side validation on destinationCountry and applicationType before submission. A user can submit empty values, corrupting case data. Add required field validation before handleSave proceeds."
+    },
+    {
+      "id": 4,
+      "label": "Data integrity: Case edit UI doesn't refresh remote state",
+      "severity": "MEDIUM",
+      "description": "After editing, the modal updates local cases state but doesn't re-fetch from the server. If the backend rejects or transforms fields, the UI cache becomes stale. Consider re-fetching the updated case after successful submission."
+    },
+    {
+      "id": 5,
+      "label": "Concern: Google OAuth button 100ms timeout is brittle",
+      "severity": "LOW",
+      "description": "The button init effect uses a 100ms timeout heuristic to ensure the DOM element exists. On slow devices or under heavy load, the element might not be present, causing silent rendering failure with no logged error. Consider retrying or logging a warning if the button element is missing."
+    }
+  ],
+  "reviewDoc": "e:\\Sakib project\\Pioneer\\pioneer-trio-services\\.agents\\tasks\\fix-review.md"
+}
