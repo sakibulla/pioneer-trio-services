@@ -30,15 +30,15 @@ export async function POST(request: Request) {
       const quickEnquiryPayload = {
         fullName: data.name,
         email: data.contact,
-        phone: "",
-        dateOfBirth: "",
-        gender: "MALE", // Use valid enum
+        phone: (data as any).phone || "0000000000", // Placeholder phone
+        dateOfBirth: "1990-01-01", // Placeholder DOB
+        gender: "MALE",
         nationality: "Bangladesh",
         nidNumber: null,
-        passportNumber: "",
-        passportExpiry: "",
-        maritalStatus: "NEVER_MARRIED", // Use valid enum
-        currentAddress: "",
+        passportNumber: "PLACEHOLDER", // Placeholder passport
+        passportExpiry: "2030-12-31", // Placeholder expiry
+        maritalStatus: "NEVER_MARRIED",
+        currentAddress: "Not provided",
         
         destinationCountry: (data as any).destinationCountry || "Not specified",
         applicationType: (data as any).applicationType || "Not specified",
@@ -49,7 +49,7 @@ export async function POST(request: Request) {
         refusalDetails: null,
 
         employmentProfile: {
-          employmentStatus: "UNEMPLOYED", // Use valid enum
+          employmentStatus: "UNEMPLOYED",
           currentEmployer: null,
           jobTitle: null,
           monthlyIncome: 0,
