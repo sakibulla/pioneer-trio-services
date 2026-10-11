@@ -5,7 +5,7 @@ import { Heart, ThumbsUp, ThumbsDown, Sparkles, User } from "lucide-react";
 import { Container } from "@/components/ui/container";
 import { Button } from "@/components/ui/button";
 import { PortalHeader } from "./PortalHeader";
-import type { AuthUser } from "@/lib/portal-api";
+import { portalApi, type AuthUser } from "@/lib/portal-api";
 
 interface MatrimonialProfile {
   id: string;
@@ -40,21 +40,55 @@ export function MatchmakerDashboard({ user, token, onLogout }: MatchmakerDashboa
   const [dataLoading, setDataLoading] = useState(true);
 
   useEffect(() => {
-    loadDashboardData();
+    if (!token) return;
+    
+    let isMounted = true;
+    (async () => {
+      if (isMounted) {
+        await loadDashboardData();
+      }
+    })();
+
+    // Refresh when user returns to tab
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible" && isMounted) {
+        loadDashboardData();
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      isMounted = false;
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
   }, []);
 
   const loadDashboardData = async () => {
     setDataLoading(true);
     try {
-      // Placeholder: These will call actual API methods once implemented
-      // const profilesRes = await portalApi.getMatrimonialProfiles(token);
-      // const matchesRes = await portalApi.getMatches(token);
+      const [profilesRes, matchesRes] = await Promise.all([
+        portalApi.getMatrimonialProfiles(token),
+        portalApi.getMatches(token),
+      ]);
+
+      console.log("[MatchmakerDashboard] Profiles response:", profilesRes);
+      console.log("[MatchmakerDashboard] Matches response:", matchesRes);
+
+      if (profilesRes?.data && Array.isArray(profilesRes.data)) {
+        setProfiles(profilesRes.data);
+      } else {
+        setProfiles([]);
+      }
       
-      // For now, show empty/loading state
+      if (matchesRes?.data && Array.isArray(matchesRes.data)) {
+        setMatches(matchesRes.data);
+      } else {
+        setMatches([]);
+      }
+    } catch (error) {
+      console.error("[MatchmakerDashboard] Failed to load dashboard data:", error);
       setProfiles([]);
       setMatches([]);
-    } catch {
-      // Error handling
     } finally {
       setDataLoading(false);
     }
