@@ -82,20 +82,45 @@ export async function POST(request: Request) {
   // Forward to Express Backend
   try {
     const backendUrl = process.env.BACKEND_API_URL || "http://localhost:5000/api/v1";
+    
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+    
     const res = await fetch(`${backendUrl}/immigration/assessments`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(backendPayload),
+      signal: controller.signal,
     });
+    
+    clearTimeout(timeoutId);
 
     if (res.ok) {
       const responseData = await res.json();
       return NextResponse.json({ ok: true, data: responseData.data });
+    } else {
+      // Backend returned an error
+      console.error("[immigration-backend-error] Status:", res.status);
+      const errorData = await res.json().catch(() => ({}));
+      return NextResponse.json(
+        { ok: false, error: errorData.message || "Backend error" },
+        { status: res.status }
+      );
     }
-  } catch (backendError) {
-    console.warn("[immigration-backend-forward-warning]", backendError);
+  } catch (backendError: any) {
+    console.error("[immigration-backend-forward-error]", backendError);
+    
+    // Return proper error response instead of fake success
+    if (backendError.name === "AbortError") {
+      return NextResponse.json(
+        { ok: false, error: "Backend service is not responding. Please try again later." },
+        { status: 504 }
+      );
+    }
+    
+    return NextResponse.json(
+      { ok: false, error: "Failed to reach backend service. Please try again later." },
+      { status: 503 }
+    );
   }
-
-  // Gracefully succeed so the user experience is smooth
-  return NextResponse.json({ ok: true });
 }
