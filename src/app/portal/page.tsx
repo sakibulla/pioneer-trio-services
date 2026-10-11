@@ -45,6 +45,7 @@ export default function ClientPortalPage() {
     if (savedToken && savedUser) {
       setToken(savedToken);
       setUser(savedUser);
+      setLoading(false);
     } else {
       setLoading(false);
     }
