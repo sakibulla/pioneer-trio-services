@@ -101,9 +101,11 @@ export function ImmigrationAssessmentForm({ user }: ImmigrationAssessmentFormPro
     setIsSubmitting(true);
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 second timeout
+      const timeoutId = setTimeout(() => controller.abort(), 90000); // 90 second timeout
       
-      const res = await fetch("/api/immigration/assessment", {
+      // Submit directly to backend API (CORS enabled)
+      const backendUrl = "https://pioneer-backend-5qhe.onrender.com/api/v1";
+      const res = await fetch(`${backendUrl}/immigration/assessments`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),

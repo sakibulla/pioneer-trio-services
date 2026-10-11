@@ -5,7 +5,7 @@ import { Clock, CheckCircle2, AlertCircle } from "lucide-react";
 import { Container } from "@/components/ui/container";
 import { Button } from "@/components/ui/button";
 import { PortalHeader } from "./PortalHeader";
-import type { AuthUser } from "@/lib/portal-api";
+import { portalApi, type AuthUser } from "@/lib/portal-api";
 
 interface QuickInquiry {
   id: string;

@@ -178,6 +178,34 @@ export const portalApi = {
     }
   },
 
+  getMyMatrimonialProfile: async (token: string) => {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
+      
+      const res = await fetch(`${BACKEND_URL}/matrimonial/my-profile`, {
+        headers: { Authorization: `Bearer ${token}` },
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+      
+      if (!res.ok) {
+        console.warn("[getMyMatrimonialProfile] API error:", res.status, res.statusText);
+        return { data: null };
+      }
+      
+      const json = await res.json();
+      console.log("[getMyMatrimonialProfile] Response:", json);
+      
+      // Handle response - data is either wrapped in .data or directly in response
+      if (json.data) return { data: json.data };
+      return { data: json };
+    } catch (error) {
+      console.error("[getMyMatrimonialProfile] Error:", error);
+      return { data: null };
+    }
+  },
+
   respondToMatch: async (token: string, matchId: string, response: "INTERESTED" | "NOT_INTERESTED") => {
     const res = await fetch(`${BACKEND_URL}/matrimonial/matches/${matchId}/respond`, {
       method: "POST",
