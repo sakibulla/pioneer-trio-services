@@ -563,8 +563,8 @@ export const portalApi = {
       const currentToken = await refreshTokenIfNeeded();
       const authToken = currentToken || token;
 
-      // Try the status endpoint (similar to cases)
-      const res = await fetch(`${BACKEND_URL}/matrimonial/profiles/${profileId}/status`, {
+      // Try PATCH directly on the profile with status field
+      const res = await fetch(`${BACKEND_URL}/matrimonial/profiles/${profileId}`, {
         method: "PATCH",
         headers: {
           Authorization: `Bearer ${authToken}`,
@@ -591,8 +591,8 @@ export const portalApi = {
       const currentToken = await refreshTokenIfNeeded();
       const authToken = currentToken || token;
 
-      // Try the status endpoint with REJECTED status
-      const res = await fetch(`${BACKEND_URL}/matrimonial/profiles/${profileId}/status`, {
+      // Try PATCH directly on the profile with REJECTED status
+      const res = await fetch(`${BACKEND_URL}/matrimonial/profiles/${profileId}`, {
         method: "PATCH",
         headers: {
           Authorization: `Bearer ${authToken}`,
