@@ -463,13 +463,20 @@ export const portalApi = {
       });
       clearTimeout(timeoutId);
       
-      if (!res.ok) return { data: [] };
+      if (!res.ok) {
+        console.warn("[getAllLeads] API error:", res.status);
+        return { data: [] };
+      }
+      
       const json = await res.json();
+      console.log("[getAllLeads] Raw response:", json);
+      
       if (json.data?.items) return { data: json.data.items };
       if (json.items) return { data: json.items };
-      if (json.data && Array.isArray(json.data)) return { data: json.data };
+      if (Array.isArray(json.data)) return { data: json.data };
       return { data: [] };
-    } catch {
+    } catch (error) {
+      console.error("[getAllLeads] Error:", error);
       return { data: [] };
     }
   },
@@ -489,13 +496,20 @@ export const portalApi = {
       });
       clearTimeout(timeoutId);
       
-      if (!res.ok) return { data: [] };
+      if (!res.ok) {
+        console.warn("[getAllProfiles] API error:", res.status);
+        return { data: [] };
+      }
+      
       const json = await res.json();
+      console.log("[getAllProfiles] Raw response:", json);
+      
       if (json.data?.items) return { data: json.data.items };
       if (json.items) return { data: json.items };
-      if (json.data && Array.isArray(json.data)) return { data: json.data };
+      if (Array.isArray(json.data)) return { data: json.data };
       return { data: [] };
-    } catch {
+    } catch (error) {
+      console.error("[getAllProfiles] Error:", error);
       return { data: [] };
     }
   },
