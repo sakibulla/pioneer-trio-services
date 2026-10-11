@@ -16,6 +16,10 @@ export async function POST(request: Request) {
     );
   }
 
+  // Get auth token from headers
+  const authHeader = request.headers.get("authorization");
+  const token = authHeader?.replace("Bearer ", "");
+
   // Logged unconditionally so nothing is silently dropped, even if email
   // delivery below is unconfigured or fails.
   console.log("[lead]", JSON.stringify(parsed.data));
@@ -157,9 +161,14 @@ export async function POST(request: Request) {
         },
       };
 
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+
       fetch(`${backendUrl}/matrimonial/profiles`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify(matrimonyPayload),
       }).catch(err => {
         console.error("[lead-matrimony-error]", err);
