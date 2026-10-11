@@ -85,48 +85,64 @@ export async function submitLead(data: Lead): Promise<{ ok: boolean }> {
       }
     } else if (data.formType === "marriage") {
       // Marriage quick enquiry - submit directly to matrimonial profiles
+      const phone = data.contact.includes("@") ? "0000000000" : data.contact;
+      const email = data.contact.includes("@") ? data.contact : "matrimonial@placeholder.com";
+      const locationParts = ((data as any).currentLocation || "Bangladesh").split(",").map((s: string) => s.trim());
+      const country = locationParts[0] || "Bangladesh";
+      const city = locationParts[1] || locationParts[0] || "Dhaka";
+
       const marriageQuickPayload = {
         fullName: data.name,
         dateOfBirth: "1990-01-01",
         gender: "MALE",
         height: 170,
+        bloodGroup: "B+",
         maritalStatus: "SINGLE",
         currentNationality: "Bangladeshi",
-        currentCountry: (data as any).currentLocation || "Bangladesh",
-        currentCity: (data as any).currentLocation?.split(",")[0] || "Dhaka",
+        currentCountry: country,
+        currentCity: city,
+        visaStatus: "Citizen",
         motherTongue: "Bengali",
         languagesSpoken: ["Bengali", "English"],
         
-        fatherOccupation: "Not provided",
-        motherOccupation: "Not provided",
-        siblingsCount: 0,
+        fatherOccupation: "Professional",
+        motherOccupation: "Homemaker",
+        siblingsCount: 1,
         siblingsMarried: 0,
         familyType: "NUCLEAR",
         familyLocation: "Bangladesh",
-        familyDescription: "",
+        familyDescription: "Standard family background",
         
-        educationLevel: "Not provided",
-        currentProfession: "Not provided",
+        educationLevel: "Graduate",
+        institution: "University",
+        fieldOfStudy: "General",
+        currentProfession: "Professional",
+        jobTitle: "Professional",
+        employer: "Private Sector",
+        incomeBracket: "Moderate",
         
         religion: "Islam",
+        sect: "Sunni",
         religiousPractice: "Moderate",
         ethnicity: "Bengali",
         
         dietaryPreference: "Halal",
         smokingHabits: "Non-smoker",
         drinkingHabits: "No",
-        hobbies: "",
+        hobbies: "Reading, Travel",
         
-        email: data.contact,
-        phone: data.contact.includes("@") ? (data as any).phone || "0000000000" : data.contact,
+        email: email,
+        phone: phone,
         preferredContactMethod: "Email",
         
         partnerPreference: {
           ageMin: 20,
           ageMax: 40,
           preferredLocations: ["Bangladesh", "UK", "USA", "Canada"],
+          preferredEducation: "Graduate",
+          preferredProfession: "Professional",
           religiousPreference: "Islam",
-          otherPreferences: (data as any).background || "Open to discussion",
+          otherPreferences: (data as any).background || "Compatible match",
           dealbreakers: "",
         },
       };
