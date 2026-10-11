@@ -2,46 +2,34 @@
   "verdict": "CHANGES_REQUESTED",
   "findings": [
     {
-      "id": 1,
-      "label": "Google OAuth timeout heuristic could fail on slow devices",
+      "label": "Backend endpoint strategy mismatch",
       "severity": "HIGH",
-      "description": "100ms timeout before checking if GSI button element exists in DOM is not defensive. On slow devices or under JavaScript load, element may not be ready, causing silent rendering failure with no error message or fallback."
+      "description": "Both approveProfile() and rejectProfile() use dual-endpoint fallback (new /status then legacy /approve/decline). If backend only implements one pattern, requests will silently fail. Requires backend team confirmation of which endpoint is authoritative."
     },
     {
-      "id": 2,
-      "label": "Profile endpoint unification assumes backend support",
-      "severity": "HIGH",
-      "description": "Both approveProfile and rejectProfile now call PATCH /status with fallback to legacy routes. If backend has both endpoints, inconsistent behavior could result. Backend endpoint availability must be verified before deployment."
-    },
-    {
-      "id": 3,
-      "label": "Missing backend ownership verification on case edit",
-      "severity": "HIGH",
-      "description": "CaseEditModal checks frontend auth state but relies entirely on backend to verify case ownership. If backend doesn't enforce ownership middleware, any authenticated user could edit any case via IDOR."
-    },
-    {
-      "id": 4,
-      "label": "Concurrent case edit conflict detection is fragile",
+      "label": "GSI re-initialization timing gap",
       "severity": "MEDIUM",
-      "description": "Conflict detection checks if error message contains 'version' or 'conflict'. If backend uses different wording, conflicts go undetected and overwrites conflict resolution."
+      "description": "Logout calls cancel() and clears state, but button re-render depends on [user, token] effect. If user navigates away before React completes the effect, GSI cleanup may be incomplete."
     },
     {
-      "id": 5,
-      "label": "Admin dashboard API failures not surfaced in UI",
+      "label": "Token refresh concurrency under load",
       "severity": "MEDIUM",
-      "description": "Promise.allSettled tracks failed APIs in dataErrors object but doesn't render them. Admin sees empty data with no indication whether endpoint failed or data doesn't exist."
+      "description": "Debounce pattern (5s window) may cause multiple simultaneous API calls to skip refresh if all see lastRefreshTime as stale. Singleton promise helps but doesn't handle expiry edge case where token expires between check and first API call in a batch."
     },
     {
-      "id": 6,
-      "label": "Token logging removal incomplete",
+      "label": "API response shape assumptions",
+      "severity": "MEDIUM",
+      "description": "getMyCases(), getAllCases(), and similar methods check 4+ response shape variants. If backend returns unexpected structure, caller gets empty array silently instead of error, making issues hard to diagnose."
+    },
+    {
+      "label": "Missing case ownership validation",
       "severity": "HIGH",
-      "description": "Frontend no longer logs token substrings, but backend OAuth endpoints may still log full tokens server-side. Frontend fix is necessary but insufficient; backend logging audit required."
+      "description": "getCaseDetails() and updateCase() don't verify the authenticated user owns the case. Backend should enforce this, but frontend should not expose case IDs that allow direct enumeration attacks."
     },
     {
-      "id": 7,
-      "label": "GSI initialization error handling missing",
+      "label": "Lead form assessment response not validated",
       "severity": "MEDIUM",
-      "description": "If NEXT_PUBLIC_GOOGLE_CLIENT_ID is missing or invalid, button silently fails with only a console warning. Admins may not see console; should display visible error or fallback."
+      "description": "After creating immigration assessment via lead form, response parsing assumes result.data?.id exists. If API changes shape, client receives empty caseId and sees success message."
     }
   ],
   "reviewDoc": "e:\\Sakib project\\Pioneer\\pioneer-trio-services\\.agents\\tasks\\fix-review.md"
