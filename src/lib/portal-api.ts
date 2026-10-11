@@ -431,10 +431,17 @@ export const portalApi = {
       });
       clearTimeout(timeoutId);
       
-      if (!res.ok) return { data: [] };
+      if (!res.ok) {
+        console.warn("[getAllCases] API error:", res.status);
+        return { data: [] };
+      }
+      
       const json = await res.json();
+      console.log("[getAllCases] Raw response:", json);
+      
       if (json.data?.items) return { data: json.data.items };
       if (json.items) return { data: json.items };
+      if (Array.isArray(json.data)) return { data: json.data };
       return { data: [] };
     } catch {
       return { data: [] };
