@@ -8,6 +8,40 @@ export interface AuthUser {
   lastName: string;
 }
 
+// Helper to refresh token before it expires
+async function refreshTokenIfNeeded(): Promise<string | null> {
+  if (typeof window === "undefined") return null;
+  
+  const token = localStorage.getItem("pioneer_token");
+  const refreshToken = localStorage.getItem("pioneer_refresh_token");
+  
+  if (!token || !refreshToken) return null;
+  
+  try {
+    // Try to refresh the token
+    const res = await fetch(`${BACKEND_URL}/auth/refresh`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ refreshToken }),
+    });
+    
+    if (res.ok) {
+      const data = await res.json();
+      if (data.data?.accessToken) {
+        localStorage.setItem("pioneer_token", data.data.accessToken);
+        if (data.data.refreshToken) {
+          localStorage.setItem("pioneer_refresh_token", data.data.refreshToken);
+        }
+        return data.data.accessToken;
+      }
+    }
+  } catch {
+    // Silent fail - will use existing token
+  }
+  
+  return token;
+}
+
 export interface ClientCase {
   id: string;
   caseReference: string;
@@ -70,10 +104,13 @@ export const portalApi = {
     return null;
   },
 
-  setToken: (token: string, user: AuthUser) => {
+  setToken: (token: string, user: AuthUser, refreshToken?: string) => {
     if (typeof window !== "undefined") {
       localStorage.setItem("pioneer_token", token);
       localStorage.setItem("pioneer_user", JSON.stringify(user));
+      if (refreshToken) {
+        localStorage.setItem("pioneer_refresh_token", refreshToken);
+      }
     }
   },
 
@@ -81,6 +118,7 @@ export const portalApi = {
     if (typeof window !== "undefined") {
       localStorage.removeItem("pioneer_token");
       localStorage.removeItem("pioneer_user");
+      localStorage.removeItem("pioneer_refresh_token");
     }
   },
 
@@ -118,11 +156,15 @@ export const portalApi = {
 
   getMyCases: async (token: string) => {
     try {
+      // Refresh token if needed
+      const currentToken = await refreshTokenIfNeeded();
+      const authToken = currentToken || token;
+      
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 5000);
       
       const res = await fetch(`${BACKEND_URL}/immigration/cases`, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { Authorization: `Bearer ${authToken}` },
         signal: controller.signal,
       });
       clearTimeout(timeoutId);
@@ -149,11 +191,15 @@ export const portalApi = {
 
   getMyMatches: async (token: string) => {
     try {
+      // Refresh token if needed
+      const currentToken = await refreshTokenIfNeeded();
+      const authToken = currentToken || token;
+      
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 5000);
       
       const res = await fetch(`${BACKEND_URL}/matrimonial/my-matches`, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { Authorization: `Bearer ${authToken}` },
         signal: controller.signal,
       });
       clearTimeout(timeoutId);
@@ -180,11 +226,15 @@ export const portalApi = {
 
   getMyMatrimonialProfile: async (token: string) => {
     try {
+      // Refresh token if needed
+      const currentToken = await refreshTokenIfNeeded();
+      const authToken = currentToken || token;
+      
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 5000);
       
       const res = await fetch(`${BACKEND_URL}/matrimonial/my-profile`, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { Authorization: `Bearer ${authToken}` },
         signal: controller.signal,
       });
       clearTimeout(timeoutId);

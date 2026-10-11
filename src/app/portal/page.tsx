@@ -112,7 +112,7 @@ export default function ClientPortalPage() {
       if (isLoginView) {
         const res = await portalApi.login(email, password);
         if (res?.success && res.data?.accessToken) {
-          portalApi.setToken(res.data.accessToken, res.data.user);
+          portalApi.setToken(res.data.accessToken, res.data.user, res.data.refreshToken);
           setToken(res.data.accessToken);
           setUser(res.data.user);
           setLoading(false);
@@ -122,7 +122,7 @@ export default function ClientPortalPage() {
       } else {
         const res = await portalApi.register({ email, password, firstName, lastName });
         if (res?.success && res.data?.accessToken) {
-          portalApi.setToken(res.data.accessToken, res.data.user);
+          portalApi.setToken(res.data.accessToken, res.data.user, res.data.refreshToken);
           setToken(res.data.accessToken);
           setUser(res.data.user);
           setLoading(false);
@@ -155,7 +155,7 @@ export default function ClientPortalPage() {
     try {
       const res = await portalApi.googleLogin(response.credential);
       if (res?.success && res.data?.accessToken) {
-        portalApi.setToken(res.data.accessToken, res.data.user);
+        portalApi.setToken(res.data.accessToken, res.data.user, res.data.refreshToken);
         setToken(res.data.accessToken);
         setUser(res.data.user);
         setLoading(false);
