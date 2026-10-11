@@ -84,7 +84,7 @@ export async function POST(request: Request) {
     const backendUrl = process.env.BACKEND_API_URL || "http://localhost:5000/api/v1";
     
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+    const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 second timeout for full assessment
     
     const res = await fetch(`${backendUrl}/immigration/assessments`, {
       method: "POST",
@@ -113,7 +113,7 @@ export async function POST(request: Request) {
     // Return proper error response instead of fake success
     if (backendError.name === "AbortError") {
       return NextResponse.json(
-        { ok: false, error: "Backend service is not responding. Please try again later." },
+        { ok: false, error: "Backend service is taking too long to respond. Please try again later." },
         { status: 504 }
       );
     }
