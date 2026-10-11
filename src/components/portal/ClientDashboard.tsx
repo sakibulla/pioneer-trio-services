@@ -283,7 +283,13 @@ export function ClientDashboard({ user, token, onLogout }: ClientDashboardProps)
                       </span>
                     </div>
                     <p className="mt-3 text-sm text-stone-700">
-                      Your profile was created on <strong>{new Date(myProfile.createdAt).toLocaleDateString()}</strong>. Our Senior Matchmaker is reviewing your information to identify compatible profiles.
+                      Your profile was created on <strong>{myProfile?.createdAt
+                        ? new Date(myProfile.createdAt).toLocaleDateString('en-GB', {
+                            day: 'numeric',
+                            month: 'long',
+                            year: 'numeric',
+                          })
+                        : 'recently'}</strong>. Our Senior Matchmaker is reviewing your information to identify compatible profiles.
                     </p>
                   </div>
                 )}
