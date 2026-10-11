@@ -59,7 +59,7 @@ export async function POST(request: Request) {
       currentBankBalance: data.sectionD.bankBalance ? Number(data.sectionD.bankBalance.replace(/[^0-9.]/g, "")) || 100000 : 100000,
       hasSponsor: data.sectionD.hasSponsor === "yes",
       sponsorRelationship: data.sectionD.sponsorRelationship || null,
-      sourceOfFunds: data.sectionD.fundsSource,
+      sourceOfFunds: data.sectionD.fundsSource || "Personal savings",
       unusualDeposits: data.sectionD.unusualDeposits === "yes",
       unusualDepositDetails: data.sectionD.unusualDepositsNotes || null,
     },
@@ -67,19 +67,20 @@ export async function POST(request: Request) {
     travelHistory: data.sectionE.countriesVisited
       ? [
           {
-            country: data.sectionE.countriesVisited,
+            country: data.sectionE.countriesVisited || "Not specified",
             visitPurpose: "International Travel",
             visitDate: new Date().toISOString(),
             hadRefusal: data.sectionE.previousRefusal === "yes",
+            refusalCountry: undefined,
             refusalReason: data.sectionE.refusalDetails || null,
           },
         ]
       : [],
 
     homeCountryTies: {
-      applicationPurpose: data.sectionF.applicationPurpose,
+      applicationPurpose: data.sectionF.applicationPurpose || "Employment",
       familyInBangladesh: true,
-      familyDetails: data.sectionF.familyInBangladesh,
+      familyDetails: data.sectionF.familyInBangladesh || null,
       ownsProperty: data.sectionF.ownProperty === "yes",
       propertyDetails: data.sectionF.propertyDetails || null,
       intentToReturn: data.sectionF.intendToReturn || "Committed to ongoing family ties in Bangladesh",
