@@ -563,12 +563,14 @@ export const portalApi = {
       const currentToken = await refreshTokenIfNeeded();
       const authToken = currentToken || token;
 
-      const res = await fetch(`${BACKEND_URL}/matrimonial/profiles/${profileId}/approve`, {
+      // Try the status endpoint (similar to cases)
+      const res = await fetch(`${BACKEND_URL}/matrimonial/profiles/${profileId}/status`, {
         method: "PATCH",
         headers: {
           Authorization: `Bearer ${authToken}`,
           "Content-Type": "application/json",
         },
+        body: JSON.stringify({ status: "APPROVED" }),
       });
 
       if (!res.ok) {
@@ -589,13 +591,18 @@ export const portalApi = {
       const currentToken = await refreshTokenIfNeeded();
       const authToken = currentToken || token;
 
-      const res = await fetch(`${BACKEND_URL}/matrimonial/profiles/${profileId}/decline`, {
-        method: "POST",
+      // Try the status endpoint with REJECTED status
+      const res = await fetch(`${BACKEND_URL}/matrimonial/profiles/${profileId}/status`, {
+        method: "PATCH",
         headers: {
           Authorization: `Bearer ${authToken}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ reasonCategory, notes }),
+        body: JSON.stringify({ 
+          status: "REJECTED", 
+          reasonCategory, 
+          notes 
+        }),
       });
 
       if (!res.ok) {
