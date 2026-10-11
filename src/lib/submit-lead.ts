@@ -147,6 +147,8 @@ export async function submitLead(data: Lead): Promise<{ ok: boolean }> {
         },
       };
 
+      console.log("[Marriage Payload]", JSON.stringify(marriageQuickPayload, null, 2));
+
       const backendUrl = "https://pioneer-backend-5qhe.onrender.com/api/v1";
       const res = await fetch(`${backendUrl}/matrimonial/profiles`, {
         method: "POST",
@@ -161,7 +163,17 @@ export async function submitLead(data: Lead): Promise<{ ok: boolean }> {
       if (res.ok) {
         return { ok: true };
       } else {
-        console.error("[Marriage Quick Enquiry Submit] Error response status:", res.status);
+        let errorMsg = "Unknown error";
+        try {
+          const errorData = await res.json();
+          console.error("[Marriage Submit Error Response]", errorData);
+          errorMsg = JSON.stringify(errorData);
+        } catch (e) {
+          const text = await res.text();
+          console.error("[Marriage Submit Error Text]", text);
+          errorMsg = text;
+        }
+        console.error("[Marriage Quick Enquiry Submit] Error response status:", res.status, errorMsg);
         return { ok: false };
       }
     } else {
