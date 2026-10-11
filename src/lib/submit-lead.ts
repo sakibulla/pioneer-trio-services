@@ -91,59 +91,66 @@ export async function submitLead(data: Lead): Promise<{ ok: boolean }> {
       const country = locationParts[0] || "Bangladesh";
       const city = locationParts[1] || locationParts[0] || "Dhaka";
 
+      // Match validator schema exactly
       const marriageQuickPayload = {
+        // Required fields
         fullName: data.name,
-        dateOfBirth: "1990-01-01",
+        dateOfBirth: "1990-01-01", // Will be transformed to Date by validator
         gender: "MALE",
-        height: 170,
-        bloodGroup: "B+",
         maritalStatus: "SINGLE",
-        currentNationality: "Bangladeshi",
         currentCountry: country,
         currentCity: city,
-        visaStatus: "Citizen",
         motherTongue: "Bengali",
-        languagesSpoken: ["Bengali", "English"],
+        languagesSpoken: ["Bengali", "English"], // Min 1 language required
         
-        fatherOccupation: "Professional",
-        motherOccupation: "Homemaker",
-        siblingsCount: 1,
-        siblingsMarried: 0,
+        fatherOccupation: "Professional", // Min 2 chars
+        motherOccupation: "Homemaker", // Min 2 chars
         familyType: "NUCLEAR",
-        familyLocation: "Bangladesh",
-        familyDescription: "Standard family background",
+        familyLocation: "Bangladesh", // Min 2 chars
         
-        educationLevel: "Graduate",
-        institution: "University",
-        fieldOfStudy: "General",
-        currentProfession: "Professional",
-        jobTitle: "Professional",
-        employer: "Private Sector",
-        incomeBracket: "Moderate",
+        educationLevel: "Graduate", // Min 2 chars
+        currentProfession: "Professional", // Min 2 chars
         
-        religion: "Islam",
-        sect: "Sunni",
-        religiousPractice: "Moderate",
-        ethnicity: "Bengali",
-        
-        dietaryPreference: "Halal",
-        smokingHabits: "Non-smoker",
-        drinkingHabits: "No",
-        hobbies: "Reading, Travel",
+        religion: "Islam", // Min 2 chars
         
         email: email,
-        phone: phone,
-        preferredContactMethod: "Email",
+        phone: phone, // Min 8 chars
+        
+        // Required for validator but can be minimal
+        height: 170, // Optional but providing valid int
+        bloodGroup: "B+", // Optional
+        currentNationality: "Bangladeshi", // Default if not provided
+        visaStatus: "Citizen", // Optional
+        siblingsCount: 1, // Default 0 if not provided
+        siblingsMarried: 0, // Default 0 if not provided
+        familyDescription: "Profile submitted via quick form", // Optional
+        
+        institution: "University", // Optional
+        fieldOfStudy: "General", // Optional
+        jobTitle: "Professional", // Optional
+        employer: "Private", // Optional
+        incomeBracket: "Moderate", // Optional
+        
+        sect: "Sunni", // Optional
+        religiousPractice: "Moderate", // Optional
+        ethnicity: "Bengali", // Optional
+        
+        dietaryPreference: "Halal", // Optional
+        smokingHabits: "Non-smoker", // Optional
+        drinkingHabits: "No", // Optional
+        hobbies: "Reading", // Optional
+        
+        preferredContactMethod: "Email", // Default if not provided
         
         partnerPreference: {
-          ageMin: 20,
-          ageMax: 40,
-          preferredLocations: ["Bangladesh", "UK", "USA", "Canada"],
-          preferredEducation: "Graduate",
-          preferredProfession: "Professional",
-          religiousPreference: "Islam",
-          otherPreferences: (data as any).background || "Compatible match",
-          dealbreakers: "",
+          ageMin: 20, // Required
+          ageMax: 40, // Required
+          preferredLocations: ["Bangladesh", "UK", "USA", "Canada"], // Min 1 required
+          preferredEducation: "Graduate", // Optional
+          preferredProfession: "Professional", // Optional
+          religiousPreference: "Islam", // Optional
+          otherPreferences: (data as any).background || "Looking for compatible match", // Optional
+          dealbreakers: "", // Optional
         },
       };
 
