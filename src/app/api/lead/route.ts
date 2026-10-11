@@ -82,6 +82,8 @@ export async function POST(request: Request) {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 120000); // 120 second timeout
         
+        console.log("[lead-assessment] Sending payload to backend:", JSON.stringify(quickEnquiryPayload, null, 2));
+        
         const assessmentRes = await fetch(`${backendUrl}/immigration/assessments`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -91,9 +93,11 @@ export async function POST(request: Request) {
         clearTimeout(timeoutId);
         
         console.log("[lead-assessment] Backend response status:", assessmentRes.status);
+        const responseText = await assessmentRes.text();
+        console.log("[lead-assessment] Backend response:", responseText);
+        
         if (!assessmentRes.ok) {
-          const errorText = await assessmentRes.text();
-          console.error("[lead-assessment-error]", errorText);
+          console.error("[lead-assessment-error] Status:", assessmentRes.status, "Response:", responseText);
         }
       } catch (assessmentError) {
         console.error("[lead-assessment-error]", assessmentError);
