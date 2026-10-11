@@ -175,8 +175,53 @@ export function MarriageProfileForm({ user }: MarriageProfileFormProps) {
 
   const nextStep = () => {
     if (currentStep < TOTAL_STEPS) {
-      // Trigger validation for current step before moving forward
-      trigger().then((isValid: boolean) => {
+      // Trigger validation for current step only
+      const sectionKey = getSectionKeyForStep(currentStep);
+      const fieldsToValidate = [
+        "sectionA.fullName",
+        "sectionA.dateOfBirth",
+        "sectionA.gender",
+        "sectionA.maritalStatus",
+        "sectionA.nationality",
+        "sectionA.currentCountry",
+        "sectionA.currentCity",
+        "sectionA.motherTongue",
+        "sectionB.fatherOccupation",
+        "sectionB.motherOccupation",
+        "sectionB.familyType",
+        "sectionB.familyLocation",
+        "sectionC.highestEducation",
+        "sectionC.institution",
+        "sectionC.fieldOfStudy",
+        "sectionC.currentProfession",
+        "sectionD.religion",
+        "sectionE.smokingHabits",
+        "sectionE.drinkingHabits",
+        "sectionG.photoCount",
+        "sectionH.governmentIdUploaded",
+        "sectionH.consentInterview",
+        "sectionH.relationshipIntent",
+        "sectionH.consentDataProcessing",
+        "sectionH.eSignature",
+        "sectionI.email",
+        "sectionI.contactNumber",
+        "sectionI.preferredContactMethod",
+      ];
+      
+      const stepFieldsMap: Record<number, string[]> = {
+        1: fieldsToValidate.filter(f => f.startsWith("sectionA")),
+        2: fieldsToValidate.filter(f => f.startsWith("sectionB")),
+        3: fieldsToValidate.filter(f => f.startsWith("sectionC")),
+        4: fieldsToValidate.filter(f => f.startsWith("sectionD")),
+        5: fieldsToValidate.filter(f => f.startsWith("sectionE")),
+        6: fieldsToValidate.filter(f => f.startsWith("sectionF")),
+        7: fieldsToValidate.filter(f => f.startsWith("sectionG")),
+        8: fieldsToValidate.filter(f => f.startsWith("sectionH")),
+        9: fieldsToValidate.filter(f => f.startsWith("sectionI")),
+      };
+      
+      const fieldsForCurrentStep = stepFieldsMap[currentStep] || [];
+      trigger(fieldsForCurrentStep as any).then((isValid: boolean) => {
         if (isValid) {
           setCurrentStep(currentStep + 1);
         }
