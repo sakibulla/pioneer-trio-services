@@ -661,4 +661,31 @@ export const portalApi = {
       return { success: false, error: String(error) };
     }
   },
+
+  verifyDocument: async (token: string, documentId: string, verified: boolean) => {
+    try {
+      const currentToken = await refreshTokenIfNeeded();
+      const authToken = currentToken || token;
+
+      const res = await fetch(`${BACKEND_URL}/immigration/documents/${documentId}/verify`, {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ verified }),
+      });
+
+      if (!res.ok) {
+        const error = await res.text();
+        console.error("[verifyDocument] Error:", error);
+        return { success: false, error };
+      }
+      const json = await res.json();
+      return { success: true, data: json.data || json };
+    } catch (error) {
+      console.error("[verifyDocument] Error:", error);
+      return { success: false, error: String(error) };
+    }
+  },
 };

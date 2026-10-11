@@ -187,21 +187,56 @@ export default function CaseDetailPage() {
         {/* Documents */}
         {caseDetail.documents && caseDetail.documents.length > 0 && (
           <div className="rounded-2xl border border-stone-200 bg-white p-6 mb-6">
-            <h2 className="text-lg font-bold text-stone-900 mb-4">Documents</h2>
+            <h2 className="text-lg font-bold text-stone-900 mb-4">Encrypted Case Documents & Verifications</h2>
             <div className="space-y-3">
               {caseDetail.documents.map((doc) => (
-                <div key={doc.id} className="flex items-center justify-between rounded-lg border border-stone-200 p-3">
-                  <div>
+                <div key={doc.id} className="flex items-center justify-between rounded-lg border border-stone-200 p-4 hover:bg-stone-50">
+                  <div className="flex-1">
                     <p className="text-sm font-semibold text-stone-900">{doc.documentType}</p>
                     <p className="text-xs text-stone-600">{doc.fileName}</p>
+                    <p className="text-xs text-stone-500 mt-1">Uploaded: {new Date(doc.uploadedAt).toLocaleDateString()}</p>
                   </div>
-                  <span className={`inline-block px-2 py-1 text-xs font-semibold rounded ${
-                    doc.verified
-                      ? "bg-emerald-100 text-emerald-800"
-                      : "bg-yellow-100 text-yellow-800"
-                  }`}>
-                    {doc.verified ? "Verified" : "Pending"}
-                  </span>
+                  <div className="flex items-center gap-3">
+                    <span className={`inline-block px-3 py-1 text-xs font-semibold rounded-full ${
+                      doc.verified
+                        ? "bg-emerald-100 text-emerald-800"
+                        : "bg-yellow-100 text-yellow-800"
+                    }`}>
+                      {doc.verified ? "Verified (AES-256 Encrypted)" : "Pending Verification"}
+                    </span>
+                    <button
+                      onClick={async () => {
+                        const token = localStorage.getItem("pioneer_token");
+                        if (!token) return;
+                        setUpdating(true);
+                        try {
+                          const result = await portalApi.verifyDocument(token, doc.id, !doc.verified);
+                          if (result.success) {
+                            // Update document in local state
+                            setCaseDetail({
+                              ...caseDetail,
+                              documents: caseDetail.documents.map(d =>
+                                d.id === doc.id ? { ...d, verified: !d.verified } : d
+                              ),
+                            });
+                            alert(`Document ${!doc.verified ? 'verified' : 'unverified'} successfully`);
+                          } else {
+                            alert("Failed to update document: " + result.error);
+                          }
+                        } finally {
+                          setUpdating(false);
+                        }
+                      }}
+                      disabled={updating}
+                      className={`px-3 py-1 text-xs font-semibold rounded-full transition-colors ${
+                        doc.verified
+                          ? "bg-yellow-600 text-white hover:bg-yellow-700"
+                          : "bg-emerald-600 text-white hover:bg-emerald-700"
+                      } disabled:opacity-60 disabled:cursor-not-allowed`}
+                    >
+                      {doc.verified ? "Unverify" : "Verify"}
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
