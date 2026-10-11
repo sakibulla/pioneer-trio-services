@@ -33,6 +33,16 @@ export default function AdminPage() {
   }, [router]);
 
   const handleLogout = () => {
+    // Clear GSI state explicitly before logging out
+    if (typeof window !== "undefined" && window.google?.accounts?.id) {
+      try {
+        window.google.accounts.id.cancel();
+        console.log("[Admin] GSI session cancelled");
+      } catch (err) {
+        console.warn("[Admin] Failed to cancel GSI session:", err);
+      }
+    }
+    
     portalApi.clearToken();
     router.push("/portal");
   };

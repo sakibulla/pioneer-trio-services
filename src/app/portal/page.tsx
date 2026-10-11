@@ -188,6 +188,16 @@ export default function ClientPortalPage() {
   };
 
   const handleLogout = () => {
+    // Clear GSI state explicitly before logging out
+    if (typeof window !== "undefined" && window.google?.accounts?.id) {
+      try {
+        window.google.accounts.id.cancel();
+        console.log("[Portal] GSI session cancelled");
+      } catch (err) {
+        console.warn("[Portal] Failed to cancel GSI session:", err);
+      }
+    }
+    
     portalApi.clearToken();
     setToken(null);
     setUser(null);
