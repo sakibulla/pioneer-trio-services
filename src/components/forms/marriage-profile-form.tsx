@@ -70,19 +70,95 @@ export function MarriageProfileForm({ user }: MarriageProfileFormProps) {
 
   const onSubmit = async (data: MarriageProfile) => {
     try {
-      const res = await fetch("/api/marriage/profile", {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 90000); // 90 second timeout
+
+      // Transform frontend schema to backend schema
+      const transformedData = {
+        // Section A
+        fullName: data.sectionA.fullName,
+        dateOfBirth: data.sectionA.dateOfBirth,
+        gender: (data.sectionA.gender || "MALE").toUpperCase(),
+        height: data.sectionA.height ? parseInt(data.sectionA.height.split(" ")[0]) : 170,
+        bloodGroup: data.sectionA.bloodGroup || "",
+        maritalStatus: (data.sectionA.maritalStatus || "SINGLE").toUpperCase().replace(/-/g, "_"),
+        currentNationality: data.sectionA.nationality || "Bangladeshi",
+        currentCountry: data.sectionA.currentCountry,
+        currentCity: data.sectionA.currentCity,
+        visaStatus: data.sectionA.visaStatus || "",
+        motherTongue: data.sectionA.motherTongue || "Bengali",
+        languagesSpoken: (data.sectionA.languagesSpoken || "Bengali,English").split(",").map((l: string) => l.trim()),
+
+        // Section B
+        fatherOccupation: data.sectionB.fatherOccupation,
+        motherOccupation: data.sectionB.motherOccupation,
+        siblingsCount: parseInt(data.sectionB.siblingsCount as any) || 0,
+        siblingsMarried: parseInt(data.sectionB.siblingsMarried as any) || 0,
+        familyType: (data.sectionB.familyType || "NUCLEAR").toUpperCase(),
+        familyLocation: data.sectionB.familyLocation,
+        familyDescription: data.sectionB.familyDescription || "",
+
+        // Section C
+        educationLevel: data.sectionC.highestEducation,
+        institution: data.sectionC.institution,
+        fieldOfStudy: data.sectionC.fieldOfStudy,
+        currentProfession: data.sectionC.currentProfession,
+        jobTitle: data.sectionC.currentProfession,
+        employer: data.sectionC.employer || "",
+        incomeBracket: data.sectionC.incomeBracket || "",
+
+        // Section D
+        religion: data.sectionD.religion || "Islam",
+        sect: data.sectionD.sect || "",
+        religiousPractice: data.sectionD.religiousPractice || "Moderate",
+        ethnicity: data.sectionD.ethnicity || "Bengali",
+
+        // Section E
+        dietaryPreference: (data as any).sectionE?.dietaryPreference || "Halal",
+        smokingHabits: (data as any).sectionE?.smokingHabits || "Non-smoker",
+        drinkingHabits: (data as any).sectionE?.drinkingHabits || "No",
+        hobbies: (data as any).sectionE?.hobbiesInterests || "",
+
+        // Section I (Contact)
+        email: data.sectionI.email,
+        phone: data.sectionI.contactNumber,
+        preferredContactMethod: data.sectionI.preferredContactMethod || "Email",
+
+        // Section F (Partner Preferences)
+        partnerPreference: {
+          ageMin: parseInt((data as any).sectionF?.preferredAgeMin) || 20,
+          ageMax: parseInt((data as any).sectionF?.preferredAgeMax) || 40,
+          preferredLocations: ((data as any).sectionF?.preferredLocations || "Bangladesh,UK,USA,Canada")
+            .split(",")
+            .map((l: string) => l.trim()),
+          preferredEducation: (data as any).sectionF?.preferredEducation || "",
+          preferredProfession: (data as any).sectionF?.preferredEducation || "",
+          religiousPreference: data.sectionD.religion || "Islam",
+          otherPreferences: (data as any).sectionF?.preferredEducation || "",
+          dealbreakers: (data as any).sectionF?.dealbreakers || "",
+        },
+      };
+
+      // Submit directly to backend API (CORS enabled)
+      const backendUrl = "https://pioneer-backend-5qhe.onrender.com/api/v1";
+      const res = await fetch(`${backendUrl}/matrimonial/profiles`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: JSON.stringify(transformedData),
+        signal: controller.signal,
       });
+
+      clearTimeout(timeoutId);
+      console.log("[Marriage Profile Submit] Response status:", res.status);
 
       if (res.ok) {
         setSubmitted(true);
       } else {
+        console.error("[Marriage Profile Submit] Error response status:", res.status);
         setSubmitted(true);
       }
-    } catch (err) {
-      console.error("Profile submission error:", err);
+    } catch (err: any) {
+      console.error("[Marriage Profile Submit] Error:", err);
       setSubmitted(true);
     }
   };

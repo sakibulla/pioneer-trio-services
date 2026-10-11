@@ -83,6 +83,71 @@ export async function submitLead(data: Lead): Promise<{ ok: boolean }> {
         console.error("[Quick Enquiry Submit] Error response status:", res.status);
         return { ok: false };
       }
+    } else if (data.formType === "marriage") {
+      // Marriage quick enquiry - submit directly to matrimonial profiles
+      const marriageQuickPayload = {
+        fullName: data.name,
+        dateOfBirth: "1990-01-01",
+        gender: "MALE",
+        height: 170,
+        maritalStatus: "SINGLE",
+        currentNationality: "Bangladeshi",
+        currentCountry: (data as any).currentLocation || "Bangladesh",
+        currentCity: (data as any).currentLocation?.split(",")[0] || "Dhaka",
+        motherTongue: "Bengali",
+        languagesSpoken: ["Bengali", "English"],
+        
+        fatherOccupation: "Not provided",
+        motherOccupation: "Not provided",
+        siblingsCount: 0,
+        siblingsMarried: 0,
+        familyType: "NUCLEAR",
+        familyLocation: "Bangladesh",
+        familyDescription: "",
+        
+        educationLevel: "Not provided",
+        currentProfession: "Not provided",
+        
+        religion: "Islam",
+        religiousPractice: "Moderate",
+        ethnicity: "Bengali",
+        
+        dietaryPreference: "Halal",
+        smokingHabits: "Non-smoker",
+        drinkingHabits: "No",
+        hobbies: "",
+        
+        email: data.contact,
+        phone: data.contact.includes("@") ? (data as any).phone || "0000000000" : data.contact,
+        preferredContactMethod: "Email",
+        
+        partnerPreference: {
+          ageMin: 20,
+          ageMax: 40,
+          preferredLocations: ["Bangladesh", "UK", "USA", "Canada"],
+          religiousPreference: "Islam",
+          otherPreferences: (data as any).background || "Open to discussion",
+          dealbreakers: "",
+        },
+      };
+
+      const backendUrl = "https://pioneer-backend-5qhe.onrender.com/api/v1";
+      const res = await fetch(`${backendUrl}/matrimonial/profiles`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(marriageQuickPayload),
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+      console.log("[Marriage Quick Enquiry Submit] Response status:", res.status);
+
+      if (res.ok) {
+        return { ok: true };
+      } else {
+        console.error("[Marriage Quick Enquiry Submit] Error response status:", res.status);
+        return { ok: false };
+      }
     } else {
       // For other form types, submit through Vercel API
       const res = await fetch("/api/lead", {
