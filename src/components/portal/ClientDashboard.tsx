@@ -41,8 +41,17 @@ export function ClientDashboard({ user, token, onLogout }: ClientDashboardProps)
       }
     })();
     
+    // Refresh when user returns to tab
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible" && isMounted) {
+        loadDashboardData();
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    
     return () => {
       isMounted = false;
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, []);
 
