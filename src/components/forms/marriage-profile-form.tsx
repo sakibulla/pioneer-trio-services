@@ -38,7 +38,8 @@ export function MarriageProfileForm({ user }: MarriageProfileFormProps) {
       formType: "marriage-profile",
       sectionA: user ? {
         fullName: `${user.firstName} ${user.lastName}`.trim(),
-      } as any : undefined,
+        nationality: "Bangladeshi",
+      } as any : { nationality: "Bangladeshi" } as any,
       sectionI: user ? {
         email: user.email,
       } as any : undefined,
@@ -187,6 +188,35 @@ export function MarriageProfileForm({ user }: MarriageProfileFormProps) {
     if (currentStep > 1) setCurrentStep(currentStep - 1);
   };
 
+  // Get section key for current step (e.g., "sectionA" for step 1)
+  const getSectionKeyForStep = (step: number): keyof MarriageProfile => {
+    const sectionMap: Record<number, keyof MarriageProfile> = {
+      1: "sectionA",
+      2: "sectionB",
+      3: "sectionC",
+      4: "sectionD",
+      5: "sectionE",
+      6: "sectionF",
+      7: "sectionG",
+      8: "sectionH",
+      9: "sectionI",
+    };
+    return sectionMap[step] || "sectionA";
+  };
+
+  // Get current step errors
+  const getCurrentStepErrors = () => {
+    const sectionKey = getSectionKeyForStep(currentStep);
+    const sectionErrors = errors[sectionKey] as any;
+    
+    if (!sectionErrors) return [];
+    
+    return Object.entries(sectionErrors).map(([field, error]: [string, any]) => ({
+      field,
+      message: error?.message || "This field is required",
+    }));
+  };
+
   const progress = (currentStep / TOTAL_STEPS) * 100;
 
   return (
@@ -246,6 +276,10 @@ export function MarriageProfileForm({ user }: MarriageProfileFormProps) {
                 </Select>
               </Field>
             </div>
+
+            <Field label="Nationality" error={errors.sectionA?.nationality?.message} htmlFor="sectionA.nationality">
+              <TextInput id="sectionA.nationality" {...register("sectionA.nationality")} placeholder="e.g. Bangladeshi, British, American" />
+            </Field>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Field label="Current Country of Residence" error={errors.sectionA?.currentCountry?.message} htmlFor="sectionA.currentCountry">
@@ -547,31 +581,47 @@ export function MarriageProfileForm({ user }: MarriageProfileFormProps) {
         )}
 
         {/* Navigation Buttons */}
-        <div className="mt-8 flex items-center justify-between border-t border-stone-200 pt-5">
-          {currentStep > 1 ? (
-            <Button type="button" variant="outline" onClick={prevStep} className="flex items-center gap-1.5">
-              <ChevronLeft className="h-4 w-4" /> Previous
-            </Button>
-          ) : (
-            <div />
+        <div className="mt-8 flex flex-col gap-4 border-t border-stone-200 pt-5">
+          {/* Step-level error messaging */}
+          {currentStep < TOTAL_STEPS && getCurrentStepErrors().length > 0 && (
+            <div className="rounded-lg bg-red-50 border border-red-200 p-4">
+              <p className="text-sm font-semibold text-red-900 mb-2">Please fix the following to continue:</p>
+              <ul className="space-y-1">
+                {getCurrentStepErrors().map((error, idx) => (
+                  <li key={idx} className="text-sm text-red-800">
+                    • <strong>{error.field.charAt(0).toUpperCase() + error.field.slice(1)}</strong>: {error.message}
+                  </li>
+                ))}
+              </ul>
+            </div>
           )}
 
-          {currentStep < TOTAL_STEPS ? (
-            <Button type="button" onClick={nextStep} className="bg-marriage-700 text-white hover:bg-marriage-800 flex items-center gap-1.5">
-              Next <ChevronRight className="h-4 w-4" />
-            </Button>
-          ) : (
-            <>
-              {Object.keys(errors).length > 0 && (
-                <p className="text-xs text-red-600 mb-2">
-                  Please fix errors: {Object.keys(errors).join(', ')}
-                </p>
-              )}
-              <Button type="submit" disabled={isSubmitting} className="bg-marriage-800 text-white hover:bg-marriage-900">
-                {isSubmitting ? "Submitting Profile..." : "Submit Profile for Review"}
+          <div className="flex items-center justify-between">
+            {currentStep > 1 ? (
+              <Button type="button" variant="outline" onClick={prevStep} className="flex items-center gap-1.5">
+                <ChevronLeft className="h-4 w-4" /> Previous
               </Button>
-            </>
-          )}
+            ) : (
+              <div />
+            )}
+
+            {currentStep < TOTAL_STEPS ? (
+              <Button type="button" onClick={nextStep} className="bg-marriage-700 text-white hover:bg-marriage-800 flex items-center gap-1.5">
+                Next <ChevronRight className="h-4 w-4" />
+              </Button>
+            ) : (
+              <>
+                {Object.keys(errors).length > 0 && (
+                  <p className="text-xs text-red-600 mb-2">
+                    Please fix errors: {Object.keys(errors).join(', ')}
+                  </p>
+                )}
+                <Button type="submit" disabled={isSubmitting} className="bg-marriage-800 text-white hover:bg-marriage-900">
+                  {isSubmitting ? "Submitting Profile..." : "Submit Profile for Review"}
+                </Button>
+              </>
+            )}
+          </div>
         </div>
       </div>
     </form>
