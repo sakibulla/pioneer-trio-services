@@ -73,6 +73,9 @@ export async function POST(request: Request) {
   // Forward to Express Backend
   try {
     const backendUrl = process.env.BACKEND_API_URL || process.env.NEXT_PUBLIC_BACKEND_API_URL || "http://localhost:5000/api/v1";
+    
+    console.log("[matrimonial-profile] Sending to backend:", JSON.stringify(backendPayload, null, 2));
+    
     const res = await fetch(`${backendUrl}/matrimonial/profiles`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -82,10 +85,20 @@ export async function POST(request: Request) {
     if (res.ok) {
       const responseData = await res.json();
       return NextResponse.json({ ok: true, data: responseData.data });
+    } else {
+      console.error("[matrimonial-backend-error] Status:", res.status);
+      const errorData = await res.json().catch(() => ({}));
+      console.error("[matrimonial-backend-error] Response:", JSON.stringify(errorData, null, 2));
+      return NextResponse.json(
+        { ok: false, error: errorData.message || "Backend error", details: errorData.errors },
+        { status: res.status }
+      );
     }
   } catch (backendError) {
-    console.warn("[marriage-backend-forward-warning]", backendError);
+    console.error("[matrimonial-backend-forward-error]", backendError);
+    return NextResponse.json(
+      { ok: false, error: "Failed to reach backend service. Please try again later." },
+      { status: 503 }
+    );
   }
-
-  return NextResponse.json({ ok: true });
 }

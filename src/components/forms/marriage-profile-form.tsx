@@ -80,12 +80,12 @@ export function MarriageProfileForm({ user }: MarriageProfileFormProps) {
         dateOfBirth: data.sectionA.dateOfBirth,
         gender: (data.sectionA.gender || "MALE").toUpperCase(),
         height: data.sectionA.height ? parseInt(data.sectionA.height.split(" ")[0]) : 170,
-        bloodGroup: data.sectionA.bloodGroup || "",
+        ...(data.sectionA.bloodGroup && { bloodGroup: data.sectionA.bloodGroup }),
         maritalStatus: (data.sectionA.maritalStatus || "SINGLE").toUpperCase().replace(/-/g, "_"),
         currentNationality: data.sectionA.nationality || "Bangladeshi",
         currentCountry: data.sectionA.currentCountry,
         currentCity: data.sectionA.currentCity,
-        visaStatus: data.sectionA.visaStatus || "",
+        ...(data.sectionA.visaStatus && { visaStatus: data.sectionA.visaStatus }),
         motherTongue: data.sectionA.motherTongue || "Bengali",
         languagesSpoken: (data.sectionA.languagesSpoken || "Bengali,English").split(",").map((l: string) => l.trim()),
 
@@ -96,19 +96,19 @@ export function MarriageProfileForm({ user }: MarriageProfileFormProps) {
         siblingsMarried: parseInt(data.sectionB.siblingsMarried as any) || 0,
         familyType: (data.sectionB.familyType || "NUCLEAR").toUpperCase(),
         familyLocation: data.sectionB.familyLocation,
-        familyDescription: data.sectionB.familyDescription || "",
+        ...(data.sectionB.familyDescription && { familyDescription: data.sectionB.familyDescription }),
 
         // Section C
         educationLevel: data.sectionC.highestEducation,
         institution: data.sectionC.institution,
         fieldOfStudy: data.sectionC.fieldOfStudy,
         currentProfession: data.sectionC.currentProfession,
-        employer: data.sectionC.employer || "",
-        incomeBracket: data.sectionC.incomeBracket || "",
+        ...(data.sectionC.employer && { employer: data.sectionC.employer }),
+        ...(data.sectionC.incomeBracket && { incomeBracket: data.sectionC.incomeBracket }),
 
         // Section D
         religion: data.sectionD.religion || "Islam",
-        sect: data.sectionD.sect || "",
+        ...(data.sectionD.sect && { sect: data.sectionD.sect }),
         religiousPractice: data.sectionD.religiousPractice || "Moderate",
         ethnicity: data.sectionD.ethnicity || "Bengali",
 
@@ -116,7 +116,7 @@ export function MarriageProfileForm({ user }: MarriageProfileFormProps) {
         dietaryPreference: (data as any).sectionE?.dietaryPreference || "Halal",
         smokingHabits: (data as any).sectionE?.smokingHabits || "Non-smoker",
         drinkingHabits: (data as any).sectionE?.drinkingHabits || "No",
-        hobbies: (data as any).sectionE?.hobbiesInterests || "",
+        ...((data as any).sectionE?.hobbiesInterests && { hobbies: (data as any).sectionE?.hobbiesInterests }),
 
         // Section I (Contact)
         email: data.sectionI.email,
@@ -130,11 +130,8 @@ export function MarriageProfileForm({ user }: MarriageProfileFormProps) {
           preferredLocations: ((data as any).sectionF?.preferredLocations || "Bangladesh,UK,USA,Canada")
             .split(",")
             .map((l: string) => l.trim()),
-          preferredEducation: (data as any).sectionF?.preferredEducation || "",
-          preferredProfession: (data as any).sectionF?.preferredEducation || "",
-          religiousPreference: data.sectionD.religion || "Islam",
-          otherPreferences: (data as any).sectionF?.preferredEducation || "",
-          dealbreakers: (data as any).sectionF?.dealbreakers || "",
+          ...((data as any).sectionF?.preferredEducation && { preferredEducation: (data as any).sectionF?.preferredEducation }),
+          ...((data as any).sectionF?.dealbreakers && { dealbreakers: (data as any).sectionF?.dealbreakers }),
         },
       };
 
