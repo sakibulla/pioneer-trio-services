@@ -26,7 +26,7 @@ export async function POST(request: Request) {
 
   // Forward submission to backend server
   try {
-    const backendUrl = "https://pioneer-backend-5qhe.onrender.com/api/v1";
+    const backendUrl = process.env.BACKEND_API_URL || process.env.NEXT_PUBLIC_BACKEND_API_URL || "https://pioneer-backend-5qhe.onrender.com/api/v1";
     const data = parsed.data;
     
     // If it's an immigration quick enquiry, create a case in the database
@@ -90,13 +90,26 @@ export async function POST(request: Request) {
       };
 
       // Submit directly to backend API
-      fetch(`${backendUrl}/immigration/assessments`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(quickEnquiryPayload),
-      }).catch(err => {
+      try {
+        const response = await fetch(`${backendUrl}/immigration/assessments`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(quickEnquiryPayload),
+        });
+        
+        if (response.ok) {
+          const result = await response.json();
+          const caseId = result.data?.id || result.id;
+          if (caseId) {
+            console.log("[lead-assessment-created]", caseId);
+            return NextResponse.json({ ok: true, caseId });
+          }
+        } else {
+          console.warn("[lead-assessment-error]", response.status, await response.text());
+        }
+      } catch (err) {
         console.error("[lead-assessment-error]", err);
-      });
+      }
     } else if (data.formType === "marriage") {
       // Marriage quick enquiry - create matrimonial profile
       const locationParts = ((data as any).currentLocation || "Bangladesh").split(",").map((s: string) => s.trim());
@@ -166,13 +179,26 @@ export async function POST(request: Request) {
         headers["Authorization"] = `Bearer ${token}`;
       }
 
-      fetch(`${backendUrl}/matrimonial/profiles`, {
-        method: "POST",
-        headers,
-        body: JSON.stringify(matrimonyPayload),
-      }).catch(err => {
+      try {
+        const response = await fetch(`${backendUrl}/matrimonial/profiles`, {
+          method: "POST",
+          headers,
+          body: JSON.stringify(matrimonyPayload),
+        });
+        
+        if (response.ok) {
+          const result = await response.json();
+          const profileId = result.data?.id || result.id;
+          if (profileId) {
+            console.log("[lead-matrimony-created]", profileId);
+            return NextResponse.json({ ok: true, profileId });
+          }
+        } else {
+          console.warn("[lead-matrimony-error]", response.status, await response.text());
+        }
+      } catch (err) {
         console.error("[lead-matrimony-error]", err);
-      });
+      }
     } else if (data.formType !== "notify") {
       // For other form types, forward to contact/general
       await fetch(`${backendUrl}/contact/general`, {
