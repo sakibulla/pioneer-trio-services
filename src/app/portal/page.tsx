@@ -50,13 +50,11 @@ export default function ClientPortalPage() {
   }, []);
 
   useEffect(() => {
-    // Only load GSI once - never reinitialize
-    if (gsiInitializedRef.current) return;
-
+    // Load GSI when not authenticated
+    if (user || token) return; // Skip if authenticated
+    
     const loadGSI = () => {
-      if (typeof window !== "undefined" && window.google?.accounts?.id && !gsiInitializedRef.current) {
-        gsiInitializedRef.current = true;
-        
+      if (typeof window !== "undefined" && window.google?.accounts?.id) {
         window.google.accounts.id.initialize({
           client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "",
           callback: handleGoogleSignIn,
@@ -80,7 +78,7 @@ export default function ClientPortalPage() {
       }
     };
 
-    if (!user && !token && typeof window !== "undefined") {
+    if (typeof window !== "undefined") {
       // Check if script already exists
       const existingScript = document.querySelector('script[src="https://accounts.google.com/gsi/client"]');
       
@@ -99,7 +97,7 @@ export default function ClientPortalPage() {
         document.head.appendChild(script);
       }
     }
-  }, []); // Empty dependency array - truly runs only once
+  }, [user, token]); // Re-run when auth state changes
 
   const handleAuthSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

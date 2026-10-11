@@ -80,11 +80,19 @@ export function AdminDashboard({ user, token, onLogout }: AdminDashboardProps) {
       const leadsRes = await portalApi.getAllLeads(token);
       const profilesRes = await portalApi.getAllProfiles(token);
       
-      // Process cases data
-      const casesData = (casesRes?.data || []) as any[];
+      console.log("[AdminDashboard] Cases response:", casesRes);
+      console.log("[AdminDashboard] Leads response:", leadsRes);
+      console.log("[AdminDashboard] Profiles response:", profilesRes);
+      
+      // Process cases data - handle both array and nested formats
+      let casesData = (casesRes?.data || []) as any[];
+      if (casesData && typeof casesData === 'object' && !Array.isArray(casesData) && 'items' in casesData) {
+        casesData = (casesData as any).items;
+      }
+      
       const formattedCases: AdminCaseItem[] = casesData.map((c) => ({
         id: c.id || c.caseReference || "N/A",
-        clientName: c.clientName || "Unknown",
+        clientName: c.clientName || c.client?.fullName || "Unknown",
         destinationCountry: c.destinationCountry || "N/A",
         status: c.status || "SUBMITTED",
         coordinator: c.coordinator?.email || undefined,

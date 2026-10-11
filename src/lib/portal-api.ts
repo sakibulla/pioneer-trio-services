@@ -1,5 +1,9 @@
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_API_URL || "http://localhost:5000/api/v1";
 
+// Track last refresh attempt to debounce
+let lastRefreshTime = 0;
+const REFRESH_DEBOUNCE_MS = 5000; // Only refresh once per 5 seconds
+
 export interface AuthUser {
   userId: string;
   email: string;
@@ -15,27 +19,34 @@ async function refreshTokenIfNeeded(): Promise<string | null> {
   const token = localStorage.getItem("pioneer_token");
   const refreshToken = localStorage.getItem("pioneer_refresh_token");
   
-  console.log("[refreshTokenIfNeeded] Token exists:", !!token, "RefreshToken exists:", !!refreshToken);
-  
   if (!token || !refreshToken) {
-    console.log("[refreshTokenIfNeeded] Missing token or refreshToken, skipping refresh");
     return null;
   }
   
+  // Skip refresh if we recently attempted one (debounce)
+  const now = Date.now();
+  if (now - lastRefreshTime < REFRESH_DEBOUNCE_MS) {
+    return token; // Return existing token, don't refresh again yet
+  }
+  
+  lastRefreshTime = now;
+  
   try {
-    console.log("[refreshTokenIfNeeded] Attempting to refresh token...");
-    // Try to refresh the token
+    // Try to refresh the token with a short timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 3000);
+    
     const res = await fetch(`${BACKEND_URL}/auth/refresh`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ refreshToken }),
+      signal: controller.signal,
     });
     
-    console.log("[refreshTokenIfNeeded] Refresh response status:", res.status);
+    clearTimeout(timeoutId);
     
     if (res.ok) {
       const data = await res.json();
-      console.log("[refreshTokenIfNeeded] Refresh successful, got new token");
       if (data.data?.accessToken) {
         localStorage.setItem("pioneer_token", data.data.accessToken);
         if (data.data.refreshToken) {
@@ -43,11 +54,18 @@ async function refreshTokenIfNeeded(): Promise<string | null> {
         }
         return data.data.accessToken;
       }
-    } else {
-      console.warn("[refreshTokenIfNeeded] Refresh failed with status:", res.status);
+    } else if (res.status === 401) {
+      // Refresh token is invalid/expired - clear auth and return null
+      // This will force a re-login on the next auth call
+      console.warn("[refreshTokenIfNeeded] Refresh token expired, clearing auth");
+      localStorage.removeItem("pioneer_token");
+      localStorage.removeItem("pioneer_refresh_token");
+      localStorage.removeItem("pioneer_user");
+      return null;
     }
+    // For other errors, return existing token and let API fail naturally
   } catch (err) {
-    console.error("[refreshTokenIfNeeded] Error:", err);
+    // Network/timeout errors - return existing token to try the API call
   }
   
   return token;

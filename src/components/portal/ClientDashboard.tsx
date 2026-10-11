@@ -316,6 +316,13 @@ export function ClientDashboard({ user, token, onLogout }: ClientDashboardProps)
                     <p className="mt-1 text-sm text-stone-500 max-w-md mx-auto">
                       Our Senior Matchmaker is curating hand-selected introductions based on your preferences.
                     </p>
+                    <Link
+                      href="https://www.pioneertrioservices.com/marriage-consultancy#inquiry"
+                      target="_blank"
+                      className="mt-4 inline-flex items-center gap-2 rounded-xl bg-marriage-700 px-4 py-2 text-sm font-semibold text-white hover:bg-marriage-800"
+                    >
+                      Send Inquiry <ChevronRight className="h-4 w-4" />
+                    </Link>
                   </div>
                 ) : (
                   matches.map((m) => (
