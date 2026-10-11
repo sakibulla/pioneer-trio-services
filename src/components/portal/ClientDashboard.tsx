@@ -61,10 +61,22 @@ export function ClientDashboard({ user, token, onLogout }: ClientDashboardProps)
         portalApi.getMyMatches(token),
       ]);
 
-      if (casesRes?.data) setCases(casesRes.data);
-      if (matchesRes?.data) setMatches(matchesRes.data);
+      console.log("[ClientDashboard] Cases response:", casesRes);
+      console.log("[ClientDashboard] Matches response:", matchesRes);
+
+      if (casesRes?.data && Array.isArray(casesRes.data)) {
+        setCases(casesRes.data);
+      } else if (casesRes?.data) {
+        setCases([casesRes.data]);
+      }
+      
+      if (matchesRes?.data && Array.isArray(matchesRes.data)) {
+        setMatches(matchesRes.data);
+      } else if (matchesRes?.data) {
+        setMatches([matchesRes.data]);
+      }
     } catch (error) {
-      console.error("Failed to load dashboard data:", error);
+      console.error("[ClientDashboard] Failed to load dashboard data:", error);
     } finally {
       setIsRefreshing(false);
       setDataLoading(false);

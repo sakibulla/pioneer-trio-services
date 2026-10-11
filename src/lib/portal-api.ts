@@ -120,14 +120,28 @@ export const portalApi = {
     const res = await fetch(`${BACKEND_URL}/immigration/cases`, {
       headers: { Authorization: `Bearer ${token}` },
     });
-    return res.json();
+    const json = await res.json();
+    console.log("[getMyCases] Response:", json);
+    
+    // Handle different response formats
+    if (json.data) return json;
+    if (Array.isArray(json)) return { data: json };
+    if (json.cases) return { data: json.cases };
+    return { data: [] };
   },
 
   getMyMatches: async (token: string) => {
     const res = await fetch(`${BACKEND_URL}/matrimonial/my-matches`, {
       headers: { Authorization: `Bearer ${token}` },
     });
-    return res.json();
+    const json = await res.json();
+    console.log("[getMyMatches] Response:", json);
+    
+    // Handle different response formats
+    if (json.data) return json;
+    if (Array.isArray(json)) return { data: json };
+    if (json.matches) return { data: json.matches };
+    return { data: [] };
   },
 
   respondToMatch: async (token: string, matchId: string, response: "INTERESTED" | "NOT_INTERESTED") => {
