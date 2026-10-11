@@ -90,6 +90,8 @@ export async function POST(request: Request) {
   try {
     const backendUrl = process.env.BACKEND_API_URL || process.env.NEXT_PUBLIC_BACKEND_API_URL || "http://localhost:5000/api/v1";
     
+    console.log("[immigration-assessment] Sending to backend:", JSON.stringify(backendPayload, null, 2));
+    
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 second timeout for full assessment
     
@@ -109,8 +111,9 @@ export async function POST(request: Request) {
       // Backend returned an error
       console.error("[immigration-backend-error] Status:", res.status);
       const errorData = await res.json().catch(() => ({}));
+      console.error("[immigration-backend-error] Response:", JSON.stringify(errorData, null, 2));
       return NextResponse.json(
-        { ok: false, error: errorData.message || "Backend error" },
+        { ok: false, error: errorData.message || "Backend error", details: errorData.errors },
         { status: res.status }
       );
     }
