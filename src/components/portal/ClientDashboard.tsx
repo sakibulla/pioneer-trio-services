@@ -31,27 +31,20 @@ export function ClientDashboard({ user, token, onLogout }: ClientDashboardProps)
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   useEffect(() => {
-    loadDashboardData();
+    if (!token) return; // Don't load if no token
     
-    // Listen for storage events from other tabs/windows
-    const handleStorageChange = () => {
-      loadDashboardData();
-    };
-    window.addEventListener("storage", handleStorageChange);
-    
-    // Listen for page visibility changes - refresh when user returns to tab
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === "visible") {
-        loadDashboardData();
+    // Only load once on mount
+    let isMounted = true;
+    (async () => {
+      if (isMounted) {
+        await loadDashboardData();
       }
-    };
-    document.addEventListener("visibilitychange", handleVisibilityChange);
+    })();
     
     return () => {
-      window.removeEventListener("storage", handleStorageChange);
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      isMounted = false;
     };
-  }, [token]);
+  }, []);
 
   const loadDashboardData = async () => {
     setIsRefreshing(true);
