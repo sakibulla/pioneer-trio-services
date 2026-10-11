@@ -32,7 +32,7 @@ export function PortalHeader({ user, onLogout }: PortalHeaderProps) {
       </div>
 
       <div className="flex items-center gap-3">
-        {user.role === "admin" && (
+        {user.role?.toLowerCase() === "admin" && (
           <Link
             href="https://pioneer-backend-5qhe.onrender.com/api/v1/docs"
             target="_blank"

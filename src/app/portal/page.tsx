@@ -332,7 +332,8 @@ export default function ClientPortalPage() {
   }
 
   // Render appropriate dashboard based on user role
-  switch (user.role) {
+  const normalizedRole = user.role?.toLowerCase() || '';
+  switch (normalizedRole) {
     case "client":
       return <ClientDashboard user={user} token={token} onLogout={handleLogout} />;
     case "coordinator":
