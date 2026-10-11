@@ -499,4 +499,122 @@ export const portalApi = {
       return { data: [] };
     }
   },
+
+  // Admin Profile Detail & Actions
+  getProfileDetails: async (token: string, profileId: string) => {
+    try {
+      const currentToken = await refreshTokenIfNeeded();
+      const authToken = currentToken || token;
+
+      const res = await fetch(`${BACKEND_URL}/matrimonial/profiles/${profileId}`, {
+        headers: { Authorization: `Bearer ${authToken}` },
+      });
+
+      if (!res.ok) return { data: null };
+      const json = await res.json();
+      return { data: json.data || json };
+    } catch (error) {
+      console.error("[getProfileDetails] Error:", error);
+      return { data: null };
+    }
+  },
+
+  approveProfile: async (token: string, profileId: string) => {
+    try {
+      const currentToken = await refreshTokenIfNeeded();
+      const authToken = currentToken || token;
+
+      const res = await fetch(`${BACKEND_URL}/matrimonial/profiles/${profileId}/approve`, {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!res.ok) {
+        const error = await res.text();
+        console.error("[approveProfile] Error:", error);
+        return { success: false, error };
+      }
+      const json = await res.json();
+      return { success: true, data: json.data || json };
+    } catch (error) {
+      console.error("[approveProfile] Error:", error);
+      return { success: false, error: String(error) };
+    }
+  },
+
+  rejectProfile: async (token: string, profileId: string, reasonCategory: string, notes: string) => {
+    try {
+      const currentToken = await refreshTokenIfNeeded();
+      const authToken = currentToken || token;
+
+      const res = await fetch(`${BACKEND_URL}/matrimonial/profiles/${profileId}/decline`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ reasonCategory, notes }),
+      });
+
+      if (!res.ok) {
+        const error = await res.text();
+        console.error("[rejectProfile] Error:", error);
+        return { success: false, error };
+      }
+      const json = await res.json();
+      return { success: true, data: json.data || json };
+    } catch (error) {
+      console.error("[rejectProfile] Error:", error);
+      return { success: false, error: String(error) };
+    }
+  },
+
+  // Admin Case Detail & Actions
+  getCaseDetails: async (token: string, caseId: string) => {
+    try {
+      const currentToken = await refreshTokenIfNeeded();
+      const authToken = currentToken || token;
+
+      const res = await fetch(`${BACKEND_URL}/immigration/cases/${caseId}`, {
+        headers: { Authorization: `Bearer ${authToken}` },
+      });
+
+      if (!res.ok) return { data: null };
+      const json = await res.json();
+      return { data: json.data || json };
+    } catch (error) {
+      console.error("[getCaseDetails] Error:", error);
+      return { data: null };
+    }
+  },
+
+  updateCaseStatus: async (token: string, caseId: string, status: string, notes?: string) => {
+    try {
+      const currentToken = await refreshTokenIfNeeded();
+      const authToken = currentToken || token;
+
+      const res = await fetch(`${BACKEND_URL}/immigration/cases/${caseId}/status`, {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ status, notes }),
+      });
+
+      if (!res.ok) {
+        const error = await res.text();
+        console.error("[updateCaseStatus] Error:", error);
+        return { success: false, error };
+      }
+      const json = await res.json();
+      return { success: true, data: json.data || json };
+    } catch (error) {
+      console.error("[updateCaseStatus] Error:", error);
+      return { success: false, error: String(error) };
+    }
+  },
 };

@@ -1,0 +1,65 @@
+Admin Detail Pages Build Report
+================================
+
+Build Status: SUCCESS ✓
+
+Files Created:
+- src/app/admin/page.tsx
+- src/app/admin/profiles/[id]/page.tsx
+- src/app/admin/cases/[id]/page.tsx
+
+Files Modified:
+- src/components/portal/AdminDashboard.tsx (updated table rows to navigate to detail pages)
+
+Build Output:
+- TypeScript compilation: PASSED
+- Next.js build: PASSED
+- All routes recognized:
+  * /admin (Static)
+  * /admin/profiles/[id] (Dynamic)
+  * /admin/cases/[id] (Dynamic)
+
+Features Implemented:
+1. Matrimonial Profile Detail Page (/admin/profiles/[id])
+   - Displays all profile sections: Personal & Identity, Family Background, Education & Career, 
+     Religious Practice, Lifestyle & Values, Partner Preferences, Photos, Consent & Acknowledgment, 
+     Contact Information
+   - Status badge showing current profile status
+   - Approve button (for PENDING_REVIEW status)
+   - Inline reject form with reason category and notes fields
+   - Back navigation to admin dashboard
+   - Auth guard: redirects to portal if not authenticated or not ADMIN role
+
+2. Immigration Case Detail Page (/admin/cases/[id])
+   - Displays case overview: reference, destination, application type, status, dates
+   - Assessment data section with all available fields
+   - Documents table with type, filename, verification status, and upload date
+   - Case history/notes section with author, type, date, and content
+   - Status update form with dropdown (SUBMITTED, UNDER_REVIEW, DOCUMENTS_PENDING, QC_REVIEW, 
+     APPROVED, COMPLETED, REJECTED) and optional notes textarea
+   - Back navigation to admin dashboard
+   - Auth guard: redirects to portal if not authenticated or not ADMIN role
+
+3. Admin Dashboard Updates
+   - Cases table rows now clickable, navigate to /admin/cases/{id}
+   - Profiles table rows now clickable, navigate to /admin/profiles/{id}
+   - Removed unused modal state and functions
+   - Maintained all existing analytics and tab functionality
+
+API Integration:
+- Uses existing portalApi methods: getProfileDetails, approveProfile, rejectProfile, 
+  getCaseDetails, updateCaseStatus
+- Token management: retrieves from localStorage and uses for authenticated requests
+- Error handling: displays inline error messages and loads gracefully
+
+UI/UX:
+- Consistent with existing admin dashboard styling (Tailwind, brand colors)
+- Responsive grid layouts
+- Status badges with appropriate colors
+- Loading states and error states properly handled
+- Navigation feedback via action messages
+
+Build Timestamp: 2026-10-11
+TypeScript Version: OK
+Next.js Version: 16.4.0
+Build Tool: Turbopack

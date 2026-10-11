@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Plane, Heart, Mail, BarChart3, Users } from "lucide-react";
 import { Container } from "@/components/ui/container";
 import { PortalHeader } from "./PortalHeader";
@@ -50,6 +51,7 @@ interface AdminDashboardProps {
 }
 
 export function AdminDashboard({ user, token, onLogout }: AdminDashboardProps) {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<"analytics" | "cases" | "leads" | "profiles">("analytics");
   const [cases, setCases] = useState<AdminCaseItem[]>([]);
   const [leads, setLeads] = useState<AdminLeadItem[]>([]);
@@ -318,7 +320,11 @@ export function AdminDashboard({ user, token, onLogout }: AdminDashboardProps) {
                   </thead>
                   <tbody>
                     {cases.map((c) => (
-                      <tr key={c.id} className="border-b border-stone-100 hover:bg-stone-50">
+                      <tr
+                        key={c.id}
+                        onClick={() => router.push(`/admin/cases/${c.id}`)}
+                        className="border-b border-stone-100 hover:bg-immigration-50 cursor-pointer transition-colors"
+                      >
                         <td className="px-4 py-3 font-mono font-bold text-immigration-800">{c.id}</td>
                         <td className="px-4 py-3 text-stone-900">{c.clientName}</td>
                         <td className="px-4 py-3 text-stone-900">{c.destinationCountry}</td>
@@ -425,7 +431,11 @@ export function AdminDashboard({ user, token, onLogout }: AdminDashboardProps) {
                   </thead>
                   <tbody>
                     {profiles.map((p) => (
-                      <tr key={p.id} className="border-b border-stone-100 hover:bg-stone-50">
+                      <tr
+                        key={p.id}
+                        onClick={() => router.push(`/admin/profiles/${p.id}`)}
+                        className="border-b border-stone-100 hover:bg-marriage-50 cursor-pointer transition-colors"
+                      >
                         <td className="px-4 py-3 font-mono font-bold text-marriage-800">{p.id}</td>
                         <td className="px-4 py-3 text-stone-900">{p.fullName}</td>
                         <td className="px-4 py-3">
