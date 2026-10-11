@@ -11,8 +11,6 @@ import {
 import { Container } from "@/components/ui/container";
 import { Button } from "@/components/ui/button";
 import { ClientDashboard } from "@/components/portal/ClientDashboard";
-import { CoordinatorDashboard } from "@/components/portal/CoordinatorDashboard";
-import { MatchmakerDashboard } from "@/components/portal/MatchmakerDashboard";
 import { AdminDashboard } from "@/components/portal/AdminDashboard";
 import { portalApi, type AuthUser } from "@/lib/portal-api";
 
@@ -350,10 +348,6 @@ export default function ClientPortalPage() {
   switch (normalizedRole) {
     case "client":
       return <ClientDashboard user={user} token={token} onLogout={handleLogout} />;
-    case "coordinator":
-      return <CoordinatorDashboard user={user} token={token} onLogout={handleLogout} />;
-    case "matchmaker":
-      return <MatchmakerDashboard user={user} token={token} onLogout={handleLogout} />;
     case "admin":
       return <AdminDashboard user={user} token={token} onLogout={handleLogout} />;
     default:
@@ -364,7 +358,7 @@ export default function ClientPortalPage() {
               <AlertCircle className="mx-auto h-10 w-10 text-red-600" />
               <h2 className="mt-3 text-lg font-bold text-red-900">Unknown Role</h2>
               <p className="mt-2 text-sm text-red-700">
-                Your account role ({user.role}) is not recognized. Please contact support for assistance.
+                Your account role ({user.role}) is not recognized. Supported roles: Client, Admin. Please contact support for assistance.
               </p>
               <Button
                 onClick={handleLogout}
