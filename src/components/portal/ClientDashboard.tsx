@@ -186,9 +186,10 @@ export function ClientDashboard({ user, token, onLogout }: ClientDashboardProps)
               </div>
             ) : (
               cases.map((c) => (
-                <div key={c.id} className="rounded-2xl border border-stone-200 bg-white p-6 shadow-sm">
-                  <div className="flex flex-col justify-between gap-4 border-b border-stone-100 pb-4 sm:flex-row sm:items-center">
-                    <div>
+                <Link key={c.id} href={`/portal/cases/${c.id}`}>
+                  <div className="rounded-2xl border border-stone-200 bg-white p-6 shadow-sm hover:shadow-md transition-shadow cursor-pointer">
+                    <div className="flex flex-col justify-between gap-4 border-b border-stone-100 pb-4 sm:flex-row sm:items-center">
+                      <div>
                       <div className="flex items-center gap-3">
                         <span className="font-mono text-sm font-bold text-immigration-800">
                           {c.caseReference}
@@ -262,7 +263,7 @@ export function ClientDashboard({ user, token, onLogout }: ClientDashboardProps)
                       </div>
                     </div>
                   </div>
-                </div>
+                </Link>
               ))
             )}
           </div>
