@@ -10,7 +10,7 @@ export async function submitLead(data: Lead): Promise<{ ok: boolean }> {
       const quickEnquiryPayload = {
         fullName: data.name,
         email: data.contact,
-        phone: (data as any).phone || "0000000000",
+        phone: ((data as any).phone || "0000000000").padEnd(8, "0"), // Ensure min 8 chars
         dateOfBirth: "1990-01-01",
         gender: "MALE",
         nationality: "Bangladeshi",
@@ -18,10 +18,10 @@ export async function submitLead(data: Lead): Promise<{ ok: boolean }> {
         passportNumber: "PLACEHOLDER",
         passportExpiry: "2030-12-31",
         maritalStatus: "SINGLE",
-        currentAddress: "Not provided",
+        currentAddress: "Not provided location", // Ensure min 5 chars
         
-        destinationCountry: (data as any).destinationCountry || "Not specified",
-        applicationType: (data as any).applicationType || "Not specified",
+        destinationCountry: (data as any).destinationCountry || "Undetermined", // Min 2 chars
+        applicationType: (data as any).applicationType || "General inquiry", // Min 2 chars
         specificProgram: "",
         targetApplicationDate: "",
         priorApplications: false,
@@ -56,12 +56,12 @@ export async function submitLead(data: Lead): Promise<{ ok: boolean }> {
         travelHistory: [],
 
         homeCountryTies: {
-          applicationPurpose: (data as any).message || "Quick enquiry submitted",
+          applicationPurpose: (data as any).message || "Quick enquiry submitted", // Min 5 required
           familyInBangladesh: true,
           familyDetails: "",
           ownsProperty: false,
           propertyDetails: "",
-          intentToReturn: "To return to Bangladesh",
+          intentToReturn: "To return to Bangladesh", // Min 5 required
         },
       };
 
