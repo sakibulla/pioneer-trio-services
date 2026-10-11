@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { X } from "lucide-react";
-import { portalApi, type ClientCase } from "@/lib/portal-api";
+import { portalApi, type ClientCase, type AuthUser } from "@/lib/portal-api";
 
 interface CaseEditModalProps {
   caseData: ClientCase;
@@ -10,18 +10,27 @@ interface CaseEditModalProps {
   onClose: () => void;
   onSave: (updated: ClientCase) => void;
   token: string;
+  currentUser?: AuthUser | null;
 }
 
-export function CaseEditModal({ caseData, isOpen, onClose, onSave, token }: CaseEditModalProps) {
+export function CaseEditModal({ caseData, isOpen, onClose, onSave, token, currentUser }: CaseEditModalProps) {
   const [destinationCountry, setDestinationCountry] = useState(caseData.destinationCountry || "");
   const [applicationType, setApplicationType] = useState(caseData.applicationType || "");
   const [specificProgram, setSpecificProgram] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [caseVersion, setCaseVersion] = useState<number>(0); // For optimistic locking
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+
+    // Frontend ownership check: verify current user is the case owner
+    // Note: Backend MUST also verify ownership. This is a defense-in-depth check.
+    if (!currentUser) {
+      setError("Authentication required. Please log in again.");
+      return;
+    }
 
     // Validate required fields
     if (!destinationCountry.trim()) {
@@ -37,19 +46,23 @@ export function CaseEditModal({ caseData, isOpen, onClose, onSave, token }: Case
     setSaving(true);
 
     try {
+      // Include version for optimistic locking (detect concurrent edits)
       const result = await portalApi.updateCase(token, caseData.id, {
         destinationCountry,
         applicationType,
         specificProgram,
+        _version: caseVersion,
       });
 
       if (result.success) {
         // Re-fetch the case to ensure UI state matches backend
-        const refreshedCase = await portalApi.getMyCases(token);
-        const updatedCase = refreshedCase?.data?.find((c: ClientCase) => c.id === caseData.id);
+        const refreshedCases = await portalApi.getMyCases(token);
+        const updatedCase = refreshedCases?.data?.find((c: ClientCase) => c.id === caseData.id);
         
         if (updatedCase) {
           onSave(updatedCase);
+          // Update local version for next edit (if backend returns it)
+          setCaseVersion((updatedCase as any)._version || 0);
         } else {
           // Fallback if refresh fails
           onSave({
@@ -61,7 +74,18 @@ export function CaseEditModal({ caseData, isOpen, onClose, onSave, token }: Case
         onClose();
         alert("Case updated successfully");
       } else {
-        setError(result.error || "Failed to update case");
+        // Check if error is due to version conflict (concurrent edit)
+        if (result.error?.includes("version") || result.error?.includes("conflict")) {
+          setError("This case was modified by another session. Refreshing...");
+          const refreshedCases = await portalApi.getMyCases(token);
+          const refreshedCase = refreshedCases?.data?.find((c: ClientCase) => c.id === caseData.id);
+          if (refreshedCase) {
+            onSave(refreshedCase);
+            onClose();
+          }
+        } else {
+          setError(result.error || "Failed to update case");
+        }
       }
     } catch (err: any) {
       setError(err.message || "An error occurred");

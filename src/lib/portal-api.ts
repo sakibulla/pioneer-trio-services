@@ -1,5 +1,14 @@
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_API_URL || "http://localhost:5000/api/v1";
 
+/**
+ * SECURITY NOTE: Token logging
+ * Frontend logs have been sanitized to remove token substrings. However, backend
+ * OAuth and auth endpoints should also audit their logging to ensure no tokens
+ * are persisted in server-side logs. This frontend fix is necessary but insufficient.
+ * Recommend: Audit backend /auth/login, /auth/google, /auth/refresh endpoints
+ * to ensure credentials are not logged in server-side logs.
+ */
+
 // Track last refresh attempt to debounce and prevent concurrent refreshes
 let lastRefreshTime = 0;
 let refreshPromise: Promise<string | null> | null = null;
@@ -83,6 +92,7 @@ async function refreshTokenIfNeeded(): Promise<string | null> {
   });
   
   return refreshPromise;
+}
 
 export interface ClientCase {
   id: string;

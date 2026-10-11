@@ -113,7 +113,12 @@ export default function ClientPortalPage() {
           console.warn("[GSI] Button element not found in DOM after 100ms timeout");
         }
       } else {
-        console.warn("[GSI] Google accounts library not ready");
+        // Google library not loaded - check if client ID is configured
+        if (!process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID) {
+          console.error("[GSI] NEXT_PUBLIC_GOOGLE_CLIENT_ID is not configured. Google button will not appear.");
+        } else {
+          console.warn("[GSI] Google accounts library not ready");
+        }
       }
     };
     

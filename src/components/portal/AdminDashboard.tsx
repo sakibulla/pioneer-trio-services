@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plane, Heart, Mail, BarChart3, Users } from "lucide-react";
+import { Plane, Heart, Mail, BarChart3, Users, AlertCircle } from "lucide-react";
 import { Container } from "@/components/ui/container";
 import { PortalHeader } from "./PortalHeader";
 import { portalApi, type AuthUser } from "@/lib/portal-api";
@@ -67,6 +67,7 @@ export function AdminDashboard({ user, token, onLogout }: AdminDashboardProps) {
     matchmakersCount: 0,
   });
   const [dataLoading, setDataLoading] = useState(true);
+  const [dataErrors, setDataErrors] = useState<{ cases?: string; leads?: string; profiles?: string }>({});
 
   useEffect(() => {
     loadDashboardData();
@@ -74,6 +75,7 @@ export function AdminDashboard({ user, token, onLogout }: AdminDashboardProps) {
 
   const loadDashboardData = async () => {
     setDataLoading(true);
+    setDataErrors({});
     try {
       // Use Promise.allSettled to handle partial failures - if one fails, others still load
       const results = await Promise.allSettled([
@@ -85,6 +87,18 @@ export function AdminDashboard({ user, token, onLogout }: AdminDashboardProps) {
       const casesRes = results[0].status === 'fulfilled' ? results[0].value : { data: [] };
       const leadsRes = results[1].status === 'fulfilled' ? results[1].value : { data: [] };
       const profilesRes = results[2].status === 'fulfilled' ? results[2].value : { data: [] };
+      
+      // Track which endpoints failed for UI indicators
+      const newErrors: typeof dataErrors = {};
+      if (results[0].status === 'rejected') {
+        newErrors.cases = `Cases failed to load: ${results[0].reason?.message || 'Unknown error'}`;
+      }
+      if (results[1].status === 'rejected') {
+        newErrors.leads = `Leads failed to load: ${results[1].reason?.message || 'Unknown error'}`;
+      }
+      if (results[2].status === 'rejected') {
+        newErrors.profiles = `Profiles failed to load: ${results[2].reason?.message || 'Unknown error'}`;
+      }
       
       console.log("[AdminDashboard] Cases response:", casesRes);
       console.log("[AdminDashboard] Leads response:", leadsRes);
@@ -126,10 +140,11 @@ export function AdminDashboard({ user, token, onLogout }: AdminDashboardProps) {
         createdAt: p.createdAt || new Date().toISOString(),
       }));
       
-      // Set data
+      // Set data and errors
       setCases(formattedCases);
       setLeads(formattedLeads);
       setProfiles(formattedProfiles);
+      setDataErrors(newErrors);
       
       // Calculate analytics
       const activeCasesCount = formattedCases.filter(
@@ -157,6 +172,11 @@ export function AdminDashboard({ user, token, onLogout }: AdminDashboardProps) {
       setCases([]);
       setLeads([]);
       setProfiles([]);
+      setDataErrors({
+        cases: "Failed to load cases",
+        leads: "Failed to load leads",
+        profiles: "Failed to load profiles",
+      });
     } finally {
       setDataLoading(false);
     }
@@ -186,7 +206,7 @@ export function AdminDashboard({ user, token, onLogout }: AdminDashboardProps) {
           <button
             type="button"
             onClick={() => setActiveTab("cases")}
-            className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all whitespace-nowrap ${
+            className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all whitespace-nowrap relative ${
               activeTab === "cases"
                 ? "bg-immigration-700 text-white shadow"
                 : "bg-white text-stone-700 hover:bg-stone-100"
@@ -194,12 +214,15 @@ export function AdminDashboard({ user, token, onLogout }: AdminDashboardProps) {
           >
             <Plane className="h-4 w-4" />
             All Immigration Cases ({cases.length})
+            {dataErrors.cases && (
+              <span className="absolute top-0 right-0 h-2 w-2 bg-red-500 rounded-full" title={dataErrors.cases} />
+            )}
           </button>
 
           <button
             type="button"
             onClick={() => setActiveTab("leads")}
-            className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all whitespace-nowrap ${
+            className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all whitespace-nowrap relative ${
               activeTab === "leads"
                 ? "bg-brand-700 text-white shadow"
                 : "bg-white text-stone-700 hover:bg-stone-100"
@@ -207,12 +230,15 @@ export function AdminDashboard({ user, token, onLogout }: AdminDashboardProps) {
           >
             <Mail className="h-4 w-4" />
             All Leads ({leads.length})
+            {dataErrors.leads && (
+              <span className="absolute top-0 right-0 h-2 w-2 bg-red-500 rounded-full" title={dataErrors.leads} />
+            )}
           </button>
 
           <button
             type="button"
             onClick={() => setActiveTab("profiles")}
-            className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all whitespace-nowrap ${
+            className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all whitespace-nowrap relative ${
               activeTab === "profiles"
                 ? "bg-marriage-700 text-white shadow"
                 : "bg-white text-stone-700 hover:bg-stone-100"
@@ -220,6 +246,9 @@ export function AdminDashboard({ user, token, onLogout }: AdminDashboardProps) {
           >
             <Heart className="h-4 w-4" />
             All Profiles ({profiles.length})
+            {dataErrors.profiles && (
+              <span className="absolute top-0 right-0 h-2 w-2 bg-red-500 rounded-full" title={dataErrors.profiles} />
+            )}
           </button>
         </div>
 
@@ -305,6 +334,15 @@ export function AdminDashboard({ user, token, onLogout }: AdminDashboardProps) {
         {/* Tab 2: All Immigration Cases */}
         {activeTab === "cases" && (
           <div className="mt-6 space-y-4">
+            {dataErrors.cases && (
+              <div className="rounded-lg bg-red-50 border border-red-200 p-4 text-sm text-red-800 flex items-start gap-2">
+                <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-semibold">Failed to load cases</p>
+                  <p className="text-xs mt-1">{dataErrors.cases}</p>
+                </div>
+              </div>
+            )}
             {dataLoading ? (
               <div className="rounded-2xl border border-stone-200 bg-white p-8">
                 <div className="flex items-center justify-center">
@@ -363,6 +401,15 @@ export function AdminDashboard({ user, token, onLogout }: AdminDashboardProps) {
         {/* Tab 3: All Leads */}
         {activeTab === "leads" && (
           <div className="mt-6 space-y-4">
+            {dataErrors.leads && (
+              <div className="rounded-lg bg-red-50 border border-red-200 p-4 text-sm text-red-800 flex items-start gap-2">
+                <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-semibold">Failed to load leads</p>
+                  <p className="text-xs mt-1">{dataErrors.leads}</p>
+                </div>
+              </div>
+            )}
             {dataLoading ? (
               <div className="rounded-2xl border border-stone-200 bg-white p-8">
                 <div className="flex items-center justify-center">
@@ -417,6 +464,15 @@ export function AdminDashboard({ user, token, onLogout }: AdminDashboardProps) {
         {/* Tab 4: All Matrimonial Profiles */}
         {activeTab === "profiles" && (
           <div className="mt-6 space-y-4">
+            {dataErrors.profiles && (
+              <div className="rounded-lg bg-red-50 border border-red-200 p-4 text-sm text-red-800 flex items-start gap-2">
+                <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-semibold">Failed to load profiles</p>
+                  <p className="text-xs mt-1">{dataErrors.profiles}</p>
+                </div>
+              </div>
+            )}
             {dataLoading ? (
               <div className="rounded-2xl border border-stone-200 bg-white p-8">
                 <div className="flex items-center justify-center">
