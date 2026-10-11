@@ -77,21 +77,28 @@ export default function ClientPortalPage() {
       }
     };
 
-    if (!user && !token) {
-      const script = document.createElement("script");
-      script.src = "https://accounts.google.com/gsi/client";
-      script.async = true;
-      script.defer = true;
-      script.onload = loadGSI;
-      document.head.appendChild(script);
+    // Only load GSI once on mount, not on every user/token change
+    if (!user && !token && typeof window !== "undefined") {
+      // Check if script already exists
+      if (!document.querySelector('script[src="https://accounts.google.com/gsi/client"]')) {
+        const script = document.createElement("script");
+        script.src = "https://accounts.google.com/gsi/client";
+        script.async = true;
+        script.defer = true;
+        script.onload = loadGSI;
+        document.head.appendChild(script);
 
-      return () => {
-        if (document.head.contains(script)) {
-          document.head.removeChild(script);
-        }
-      };
+        return () => {
+          if (document.head.contains(script)) {
+            document.head.removeChild(script);
+          }
+        };
+      } else {
+        // Script already loaded, just render button
+        loadGSI();
+      }
     }
-  }, [user, token]);
+  }, []); // Empty dependency array - only run once on mount
 
   const handleAuthSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
