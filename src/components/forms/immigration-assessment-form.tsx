@@ -81,24 +81,41 @@ export function ImmigrationAssessmentForm() {
     setSubmitError(null);
     setIsSubmitting(true);
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+      
       const res = await fetch("/api/immigration/assessment", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
+        signal: controller.signal,
       });
+      
+      clearTimeout(timeoutId);
+      console.log("[Assessment Submit] Response status:", res.status);
+      
       if (res.ok) {
         setSubmitted(true);
+        // Clear session storage after successful submission
+        if (typeof window !== "undefined") {
+          sessionStorage.removeItem("immigrationInquiry");
+        }
       } else {
         let msg = "Submission failed. Please try again.";
         try {
           const json = await res.json();
+          console.error("[Assessment Submit] Error response:", json);
           if (json?.error) msg = json.error;
         } catch { /* ignore */ }
         setSubmitError(msg);
       }
-    } catch (err) {
-      console.error("Submission error:", err);
-      setSubmitError("A network error occurred. Please check your connection and try again.");
+    } catch (err: any) {
+      console.error("[Assessment Submit] Error:", err);
+      if (err.name === 'AbortError') {
+        setSubmitError("Request timed out. The server took too long to respond. Please try again.");
+      } else {
+        setSubmitError("A network error occurred. Please check your connection and try again.");
+      }
     } finally {
       setIsSubmitting(false);
     }
