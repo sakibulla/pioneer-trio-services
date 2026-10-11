@@ -80,25 +80,23 @@ export async function POST(request: Request) {
 
       try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 120000); // 120 second timeout
+        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
         
-        console.log("[lead-assessment] Sending payload to backend:", JSON.stringify(quickEnquiryPayload, null, 2));
+        console.log("[lead-assessment] Sending payload to backend:", quickEnquiryPayload.email);
         
-        const assessmentRes = await fetch(`${backendUrl}/immigration/assessments`, {
+        // Don't wait for backend - fire and forget to avoid Vercel timeout
+        fetch(`${backendUrl}/immigration/assessments`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(quickEnquiryPayload),
           signal: controller.signal,
+        }).then(res => {
+          console.log("[lead-assessment] Backend response status:", res.status);
+        }).catch(err => {
+          console.error("[lead-assessment-error]", err);
+        }).finally(() => {
+          clearTimeout(timeoutId);
         });
-        clearTimeout(timeoutId);
-        
-        console.log("[lead-assessment] Backend response status:", assessmentRes.status);
-        const responseText = await assessmentRes.text();
-        console.log("[lead-assessment] Backend response:", responseText);
-        
-        if (!assessmentRes.ok) {
-          console.error("[lead-assessment-error] Status:", assessmentRes.status, "Response:", responseText);
-        }
       } catch (assessmentError) {
         console.error("[lead-assessment-error]", assessmentError);
       }
