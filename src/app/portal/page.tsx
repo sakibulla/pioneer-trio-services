@@ -111,7 +111,11 @@ export default function ClientPortalPage() {
     try {
       if (isLoginView) {
         const res = await portalApi.login(email, password);
+        console.log("[Portal] Login response:", res);
         if (res?.success && res.data?.accessToken) {
+          console.log("[Portal] Login successful, storing tokens");
+          console.log("[Portal] accessToken:", res.data.accessToken?.substring(0, 20) + "...");
+          console.log("[Portal] refreshToken:", res.data.refreshToken?.substring(0, 20) + "...");
           portalApi.setToken(res.data.accessToken, res.data.user, res.data.refreshToken);
           setToken(res.data.accessToken);
           setUser(res.data.user);

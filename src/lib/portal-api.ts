@@ -15,9 +15,15 @@ async function refreshTokenIfNeeded(): Promise<string | null> {
   const token = localStorage.getItem("pioneer_token");
   const refreshToken = localStorage.getItem("pioneer_refresh_token");
   
-  if (!token || !refreshToken) return null;
+  console.log("[refreshTokenIfNeeded] Token exists:", !!token, "RefreshToken exists:", !!refreshToken);
+  
+  if (!token || !refreshToken) {
+    console.log("[refreshTokenIfNeeded] Missing token or refreshToken, skipping refresh");
+    return null;
+  }
   
   try {
+    console.log("[refreshTokenIfNeeded] Attempting to refresh token...");
     // Try to refresh the token
     const res = await fetch(`${BACKEND_URL}/auth/refresh`, {
       method: "POST",
@@ -25,8 +31,11 @@ async function refreshTokenIfNeeded(): Promise<string | null> {
       body: JSON.stringify({ refreshToken }),
     });
     
+    console.log("[refreshTokenIfNeeded] Refresh response status:", res.status);
+    
     if (res.ok) {
       const data = await res.json();
+      console.log("[refreshTokenIfNeeded] Refresh successful, got new token");
       if (data.data?.accessToken) {
         localStorage.setItem("pioneer_token", data.data.accessToken);
         if (data.data.refreshToken) {
@@ -34,9 +43,11 @@ async function refreshTokenIfNeeded(): Promise<string | null> {
         }
         return data.data.accessToken;
       }
+    } else {
+      console.warn("[refreshTokenIfNeeded] Refresh failed with status:", res.status);
     }
-  } catch {
-    // Silent fail - will use existing token
+  } catch (err) {
+    console.error("[refreshTokenIfNeeded] Error:", err);
   }
   
   return token;
@@ -160,6 +171,8 @@ export const portalApi = {
       const currentToken = await refreshTokenIfNeeded();
       const authToken = currentToken || token;
       
+      console.log("[getMyCases] Using token:", authToken?.substring(0, 20) + "...");
+      
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 5000);
       
@@ -195,6 +208,8 @@ export const portalApi = {
       const currentToken = await refreshTokenIfNeeded();
       const authToken = currentToken || token;
       
+      console.log("[getMyMatches] Using token:", authToken?.substring(0, 20) + "...");
+      
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 5000);
       
@@ -229,6 +244,8 @@ export const portalApi = {
       // Refresh token if needed
       const currentToken = await refreshTokenIfNeeded();
       const authToken = currentToken || token;
+      
+      console.log("[getMyMatrimonialProfile] Using token:", authToken?.substring(0, 20) + "...");
       
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 5000);
