@@ -67,6 +67,8 @@ export async function submitLead(data: Lead): Promise<{ ok: boolean }> {
 
       // Submit directly to backend API (CORS enabled)
       const backendUrl = "https://pioneer-backend-5qhe.onrender.com/api/v1";
+      console.log("[Immigration Payload]", JSON.stringify(quickEnquiryPayload, null, 2));
+      
       const res = await fetch(`${backendUrl}/immigration/assessments`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -80,7 +82,17 @@ export async function submitLead(data: Lead): Promise<{ ok: boolean }> {
       if (res.ok) {
         return { ok: true };
       } else {
-        console.error("[Quick Enquiry Submit] Error response status:", res.status);
+        let errorMsg = "Unknown error";
+        try {
+          const errorData = await res.json();
+          console.error("[Immigration Submit Error Response]", errorData);
+          errorMsg = JSON.stringify(errorData);
+        } catch (e) {
+          const text = await res.text();
+          console.error("[Immigration Submit Error Text]", text);
+          errorMsg = text;
+        }
+        console.error("[Quick Enquiry Submit] Error response status:", res.status, errorMsg);
         return { ok: false };
       }
     } else if (data.formType === "marriage") {
