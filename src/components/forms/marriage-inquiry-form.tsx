@@ -4,13 +4,22 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CheckCircle2 } from "lucide-react";
+import Link from "next/link";
 import { marriageLeadSchema, type MarriageLead } from "@/lib/lead-schema";
 import { submitLead } from "@/lib/submit-lead";
 import { Field, TextInput, TextArea } from "@/components/ui/form-fields";
 import { Button } from "@/components/ui/button";
+import { portalApi } from "@/lib/portal-api";
 
 export function MarriageInquiryForm({ user }: { user?: { firstName: string; lastName: string; email: string } | null }) {
   const [submitted, setSubmitted] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    const currentUser = portalApi.getCurrentUser();
+    setIsLoggedIn(!!currentUser);
+  }, []);
+
   const {
     register,
     handleSubmit,
@@ -43,6 +52,20 @@ export function MarriageInquiryForm({ user }: { user?: { firstName: string; last
     }
   }, [user, reset]);
 
+  if (!isLoggedIn) {
+    return (
+      <div className="rounded-2xl border border-dashed border-marriage-300 bg-marriage-50 p-8 text-center">
+        <p className="font-semibold text-marriage-900 text-lg">Login Required</p>
+        <p className="mt-2 text-sm text-marriage-800 mb-6">
+          You must be logged in to submit a profile inquiry.
+        </p>
+        <Link href="/portal">
+          <Button tone="marriage">Go to Portal & Log In</Button>
+        </Link>
+      </div>
+    );
+  }
+
   if (submitted) {
     return (
       <div className="flex items-start gap-3 rounded-2xl border border-marriage-200 bg-marriage-50 p-6 text-marriage-900">
@@ -50,7 +73,7 @@ export function MarriageInquiryForm({ user }: { user?: { firstName: string; last
         <div>
           <p className="font-semibold">Thanks — your profile inquiry is in.</p>
           <p className="mt-1 text-sm text-marriage-800">
-            A matchmaker will reach out within one business day to start your verification and intake.
+            Check your <Link href="/portal" className="font-bold underline hover:text-marriage-700">portal dashboard</Link> to see your profile and matches.
           </p>
         </div>
       </div>

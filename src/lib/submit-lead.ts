@@ -5,205 +5,23 @@ export async function submitLead(data: Lead): Promise<{ ok: boolean }> {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 90000); // 90 second timeout
 
-    // If it's an immigration quick enquiry, submit directly to backend API (CORS enabled)
-    if (data.formType === "immigration") {
-      const quickEnquiryPayload = {
-        fullName: data.name,
-        email: data.contact,
-        phone: (data as any).phone || "00000",
-        dateOfBirth: "1990-01-01",
-        gender: "MALE",
-        nationality: "Bangladeshi",
-        nidNumber: "",
-        passportNumber: "PLACEHOLDER",
-        passportExpiry: "2030-12-31",
-        maritalStatus: "SINGLE",
-        currentAddress: "TBD",
-        
-        destinationCountry: (data as any).destinationCountry || "TBD",
-        applicationType: (data as any).applicationType || "TBD",
-        specificProgram: "",
-        targetApplicationDate: "",
-        priorApplications: false,
-        priorRefusals: false,
-        refusalDetails: "",
+    // Submit through Vercel API which forwards to backend
+    const res = await fetch("/api/lead", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+      signal: controller.signal,
+    });
 
-        employmentProfile: {
-          employmentStatus: "UNEMPLOYED",
-          currentEmployer: "",
-          jobTitle: "",
-          employmentSince: "",
-          monthlyIncome: 0,
-          businessName: "",
-          businessType: "",
-          businessSince: "",
-          annualRevenue: 0,
-          institution: "",
-          fieldOfStudy: "",
-          expectedGraduation: "",
-        },
+    clearTimeout(timeoutId);
+    console.log("[Lead Submit] Response status:", res.status);
 
-        financialProfile: {
-          currentBankBalance: 0,
-          hasSponsor: false,
-          sponsorRelationship: "",
-          sponsorContribution: 0,
-          sourceOfFunds: "Personal savings",
-          unusualDeposits: false,
-          unusualDepositDetails: "",
-        },
-
-        travelHistory: [],
-
-        homeCountryTies: {
-          applicationPurpose: (data as any).message || "Quick enquiry",
-          familyInBangladesh: true,
-          familyDetails: "",
-          ownsProperty: false,
-          propertyDetails: "",
-          intentToReturn: "Undecided",
-        },
-      };
-
-      // Submit directly to backend API (CORS enabled)
-      const backendUrl = "https://pioneer-backend-5qhe.onrender.com/api/v1";
-      console.log("[Immigration Payload]", JSON.stringify(quickEnquiryPayload, null, 2));
-      
-      const res = await fetch(`${backendUrl}/immigration/assessments`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(quickEnquiryPayload),
-        signal: controller.signal,
-      });
-
-      clearTimeout(timeoutId);
-      console.log("[Quick Enquiry Submit] Response status:", res.status);
-
-      if (res.ok) {
-        return { ok: true };
-      } else {
-        let errorMsg = "Unknown error";
-        try {
-          const errorData = await res.json();
-          console.error("[Immigration Submit Error Response]", errorData);
-          errorMsg = JSON.stringify(errorData);
-        } catch (e) {
-          const text = await res.text();
-          console.error("[Immigration Submit Error Text]", text);
-          errorMsg = text;
-        }
-        console.error("[Quick Enquiry Submit] Error response status:", res.status, errorMsg);
-        return { ok: false };
-      }
-    } else if (data.formType === "marriage") {
-      // Marriage quick enquiry - submit directly to matrimonial profiles
-      const phone = data.contact.includes("@") ? "0000000000" : data.contact;
-      const email = data.contact.includes("@") ? data.contact : "matrimonial@placeholder.com";
-      const locationParts = ((data as any).currentLocation || "Bangladesh").split(",").map((s: string) => s.trim());
-      const country = locationParts[0] || "Bangladesh";
-      const city = locationParts[1] || locationParts[0] || "Dhaka";
-
-      // Match validator schema exactly
-      const marriageQuickPayload = {
-        fullName: data.name,
-        dateOfBirth: "1990-01-01",
-        gender: "MALE",
-        maritalStatus: "SINGLE",
-        currentCountry: country,
-        currentCity: city,
-        motherTongue: "Bengali",
-        languagesSpoken: ["Bengali"],
-        
-        fatherOccupation: "Professional",
-        motherOccupation: "Homemaker",
-        familyType: "NUCLEAR",
-        familyLocation: "BD",
-        
-        educationLevel: "Graduate",
-        currentProfession: "Professional",
-        
-        religion: "Islam",
-        religiousPractice: "Moderate",
-        
-        dietaryPreference: "Halal",
-        smokingHabits: "No",
-        drinkingHabits: "No",
-        
-        email: email,
-        phone: phone,
-        
-        bloodGroup: "B+",
-        visaStatus: "Citizen",
-        siblingsCount: 1,
-        siblingsMarried: 0,
-        familyDescription: "",
-        
-        institution: "Unspecified",
-        fieldOfStudy: "General",
-        jobTitle: "Professional",
-        employer: "Private",
-        incomeBracket: "Moderate",
-        
-        sect: "Sunni",
-        ethnicity: "Bengali",
-        
-        hobbies: "",
-        preferredContactMethod: "Email",
-        
-        partnerPreference: {
-          ageMin: 20,
-          ageMax: 40,
-          preferredLocations: [country || "Bangladesh"],
-          preferredEducation: "Graduate",
-          preferredProfession: "Professional",
-          religiousPreference: "Islam",
-          otherPreferences: (data as any).background || "Compatible match",
-          dealbreakers: "",
-        },
-      };
-
-      console.log("[Marriage Payload]", JSON.stringify(marriageQuickPayload, null, 2));
-
-      const backendUrl = "https://pioneer-backend-5qhe.onrender.com/api/v1";
-      const res = await fetch(`${backendUrl}/matrimonial/profiles`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(marriageQuickPayload),
-        signal: controller.signal,
-      });
-
-      clearTimeout(timeoutId);
-      console.log("[Marriage Quick Enquiry Submit] Response status:", res.status);
-
-      if (res.ok) {
-        return { ok: true };
-      } else {
-        let errorMsg = "Unknown error";
-        try {
-          const errorData = await res.json();
-          console.error("[Marriage Submit Error Response]", errorData);
-          errorMsg = JSON.stringify(errorData);
-        } catch (e) {
-          const text = await res.text();
-          console.error("[Marriage Submit Error Text]", text);
-          errorMsg = text;
-        }
-        console.error("[Marriage Quick Enquiry Submit] Error response status:", res.status, errorMsg);
-        return { ok: false };
-      }
-    } else {
-      // For other form types, submit through Vercel API
-      const res = await fetch("/api/lead", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-        signal: controller.signal,
-      });
-
-      clearTimeout(timeoutId);
-      if (!res.ok) return { ok: false };
-      return res.json();
+    if (!res.ok) {
+      console.error("[Lead Submit] Error response status:", res.status);
+      return { ok: false };
     }
+
+    return res.json();
   } catch (err: any) {
     console.error("[Submit Lead] Error:", err);
     if (err.name === 'AbortError') {

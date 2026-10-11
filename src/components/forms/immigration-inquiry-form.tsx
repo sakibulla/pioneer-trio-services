@@ -4,11 +4,13 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CheckCircle2 } from "lucide-react";
+import Link from "next/link";
 import { immigrationLeadSchema, type ImmigrationLead } from "@/lib/lead-schema";
 import { submitLead } from "@/lib/submit-lead";
 import { Field, TextInput, TextArea, Select } from "@/components/ui/form-fields";
 import { Button } from "@/components/ui/button";
 import { destinations } from "@/data/destinations";
+import { portalApi } from "@/lib/portal-api";
 
 const applicationTypes = [
   "Study permit / study visa",
@@ -28,6 +30,13 @@ interface ImmigrationInquiryFormProps {
 
 export function ImmigrationInquiryForm({ user }: ImmigrationInquiryFormProps) {
   const [submitted, setSubmitted] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    const currentUser = portalApi.getCurrentUser();
+    setIsLoggedIn(!!currentUser);
+  }, []);
+
   const {
     register,
     handleSubmit,
@@ -60,6 +69,20 @@ export function ImmigrationInquiryForm({ user }: ImmigrationInquiryFormProps) {
     }
   }, [user, reset]);
 
+  if (!isLoggedIn) {
+    return (
+      <div className="rounded-2xl border border-dashed border-immigration-300 bg-immigration-50 p-8 text-center">
+        <p className="font-semibold text-immigration-900 text-lg">Login Required</p>
+        <p className="mt-2 text-sm text-immigration-800 mb-6">
+          You must be logged in to submit a case inquiry.
+        </p>
+        <Link href="/portal">
+          <Button tone="immigration">Go to Portal & Log In</Button>
+        </Link>
+      </div>
+    );
+  }
+
   if (submitted) {
     return (
       <div className="flex items-start gap-3 rounded-2xl border border-immigration-200 bg-immigration-50 p-6 text-immigration-900">
@@ -67,7 +90,7 @@ export function ImmigrationInquiryForm({ user }: ImmigrationInquiryFormProps) {
         <div>
           <p className="font-semibold">Thanks — your case inquiry is in.</p>
           <p className="mt-1 text-sm text-immigration-800">
-            A coordinator will follow up within one business day at the contact you provided.
+            Check your <Link href="/portal" className="font-bold underline hover:text-immigration-700">portal dashboard</Link> to see your case.
           </p>
         </div>
       </div>
@@ -77,15 +100,6 @@ export function ImmigrationInquiryForm({ user }: ImmigrationInquiryFormProps) {
   return (
     <form
       onSubmit={handleSubmit(async (data) => {
-        // Save inquiry data to sessionStorage for use in assessment form
-        if (typeof window !== "undefined") {
-          sessionStorage.setItem("immigrationInquiry", JSON.stringify({
-            name: data.name,
-            contact: data.contact,
-            destinationCountry: data.destinationCountry,
-            applicationType: data.applicationType,
-          }));
-        }
         const res = await submitLead(data);
         if (res.ok) setSubmitted(true);
       })}
