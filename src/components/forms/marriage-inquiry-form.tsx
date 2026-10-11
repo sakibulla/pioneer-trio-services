@@ -9,7 +9,7 @@ import { submitLead } from "@/lib/submit-lead";
 import { Field, TextInput, TextArea } from "@/components/ui/form-fields";
 import { Button } from "@/components/ui/button";
 
-export function MarriageInquiryForm() {
+export function MarriageInquiryForm({ user }: { user?: { firstName: string; lastName: string; email: string } | null }) {
   const [submitted, setSubmitted] = useState(false);
   const {
     register,
@@ -19,8 +19,8 @@ export function MarriageInquiryForm() {
     resolver: zodResolver(marriageLeadSchema),
     defaultValues: {
       formType: "marriage",
-      name: "",
-      contact: "",
+      name: user ? `${user.firstName} ${user.lastName}`.trim() : "",
+      contact: user ? user.email : "",
       age: "",
       currentLocation: "",
       background: "",

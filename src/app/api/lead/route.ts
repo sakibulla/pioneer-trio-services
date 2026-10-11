@@ -25,8 +25,66 @@ export async function POST(request: Request) {
     const backendUrl = process.env.BACKEND_API_URL || "http://localhost:5000/api/v1";
     const data = parsed.data;
     
-    // Only forward if it's not a notify lead (which doesn't have name/email)
-    if (data.formType !== "notify") {
+    // If it's an immigration quick enquiry, create a case in the database
+    if (data.formType === "immigration") {
+      const quickEnquiryPayload = {
+        fullName: data.name,
+        email: data.contact,
+        phone: "",
+        dateOfBirth: "",
+        gender: "NOT_SPECIFIED",
+        nationality: "Bangladesh",
+        nidNumber: null,
+        passportNumber: "",
+        passportExpiry: "",
+        maritalStatus: "NOT_SPECIFIED",
+        currentAddress: "",
+        
+        destinationCountry: (data as any).destinationCountry || "Not specified",
+        applicationType: (data as any).applicationType || "Not specified",
+        specificProgram: null,
+        targetApplicationDate: null,
+        priorApplications: false,
+        priorRefusals: false,
+        refusalDetails: null,
+
+        employmentProfile: {
+          employmentStatus: "NOT_SPECIFIED",
+          currentEmployer: null,
+          jobTitle: null,
+          monthlyIncome: 0,
+          businessName: null,
+          businessType: null,
+        },
+
+        financialProfile: {
+          currentBankBalance: 0,
+          hasSponsor: false,
+          sponsorRelationship: null,
+          sourceOfFunds: "Not specified",
+          unusualDeposits: false,
+          unusualDepositDetails: null,
+        },
+
+        travelHistory: [],
+
+        homeCountryTies: {
+          applicationPurpose: (data as any).message || "Quick enquiry submitted",
+          familyInBangladesh: false,
+          familyDetails: null,
+          ownsProperty: false,
+          propertyDetails: null,
+          intentToReturn: "Not specified",
+        },
+      };
+
+      await fetch(`${backendUrl}/immigration/assessments`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(quickEnquiryPayload),
+      });
+    } else if (data.formType !== "notify") {
+      // For other form types, forward to contact/general
       await fetch(`${backendUrl}/contact/general`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },

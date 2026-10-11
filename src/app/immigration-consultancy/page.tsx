@@ -159,7 +159,7 @@ export default function ImmigrationConsultancyPage() {
           </div>
 
           <div className="mt-8">
-            {showFullForm ? <ImmigrationAssessmentForm user={user} /> : <ImmigrationInquiryForm />}
+            {showFullForm ? <ImmigrationAssessmentForm user={user} /> : <ImmigrationInquiryForm user={user} />}
           </div>
         </Container>
       </section>

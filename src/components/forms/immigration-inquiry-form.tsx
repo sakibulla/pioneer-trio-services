@@ -18,7 +18,15 @@ const applicationTypes = [
   "Not sure yet",
 ];
 
-export function ImmigrationInquiryForm() {
+interface ImmigrationInquiryFormProps {
+  user?: {
+    firstName: string;
+    lastName: string;
+    email: string;
+  } | null;
+}
+
+export function ImmigrationInquiryForm({ user }: ImmigrationInquiryFormProps) {
   const [submitted, setSubmitted] = useState(false);
   const {
     register,
@@ -28,8 +36,8 @@ export function ImmigrationInquiryForm() {
     resolver: zodResolver(immigrationLeadSchema),
     defaultValues: {
       formType: "immigration",
-      name: "",
-      contact: "",
+      name: user ? `${user.firstName} ${user.lastName}`.trim() : "",
+      contact: user ? user.email : "",
       destinationCountry: "",
       applicationType: "",
       message: "",

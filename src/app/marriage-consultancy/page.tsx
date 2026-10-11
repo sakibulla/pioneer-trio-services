@@ -184,7 +184,7 @@ export default function MarriageConsultancyPage() {
           </div>
 
           <div className="mt-8">
-            {showFullForm ? <MarriageProfileForm user={user} /> : <MarriageInquiryForm />}
+            {showFullForm ? <MarriageProfileForm user={user} /> : <MarriageInquiryForm user={user} />}
           </div>
         </Container>
       </section>
