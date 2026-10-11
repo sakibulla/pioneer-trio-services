@@ -44,6 +44,9 @@ export default function CaseDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [updating, setUpdating] = useState(false);
   const [newStatus, setNewStatus] = useState<string>("");
+  const [uploadingDoc, setUploadingDoc] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [docType, setDocType] = useState("Passport Scan");
 
   useEffect(() => {
     if (!caseId) return;
@@ -90,6 +93,47 @@ export default function CaseDetailPage() {
       alert("Failed to update status: " + err.message);
     } finally {
       setUpdating(false);
+    }
+  };
+
+  const handleDocumentUpload = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedFile || !caseDetail) return;
+
+    try {
+      setUploadingDoc(true);
+      const token = localStorage.getItem("pioneer_token");
+      if (!token) return;
+
+      const formData = new FormData();
+      formData.append("file", selectedFile);
+      formData.append("documentType", docType);
+
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_API_URL || "http://localhost:5000/api/v1"}/immigration/cases/${caseId}/documents`,
+        {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` },
+          body: formData,
+        }
+      );
+
+      if (!res.ok) {
+        throw new Error("Failed to upload document");
+      }
+
+      const newDoc = await res.json();
+      setCaseDetail({
+        ...caseDetail,
+        documents: [...caseDetail.documents, newDoc.data],
+      });
+      setSelectedFile(null);
+      setDocType("Passport Scan");
+      alert("Document uploaded successfully");
+    } catch (err: any) {
+      alert("Failed to upload document: " + err.message);
+    } finally {
+      setUploadingDoc(false);
     }
   };
 
@@ -242,6 +286,48 @@ export default function CaseDetailPage() {
             </div>
           </div>
         )}
+
+        {/* Upload Document */}
+        <div className="rounded-2xl border border-stone-200 bg-white p-6 mb-6">
+          <h2 className="text-lg font-bold text-stone-900 mb-4">Upload Document</h2>
+          <form onSubmit={handleDocumentUpload} className="space-y-4">
+            <div>
+              <label className="text-xs font-semibold text-stone-700 block mb-2">Document Type</label>
+              <select
+                value={docType}
+                onChange={(e) => setDocType(e.target.value)}
+                className="w-full px-3 py-2 border border-stone-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-immigration-500"
+              >
+                <option>Passport Scan</option>
+                <option>Educational Transcript / ECA</option>
+                <option>Employment Letter</option>
+                <option>Birth Certificate</option>
+                <option>Medical Report</option>
+                <option>Police Clearance</option>
+                <option>IELTS / Language Test</option>
+                <option>Other</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-stone-700 block mb-2">Select File</label>
+              <input
+                type="file"
+                onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
+                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.gif"
+                className="w-full px-3 py-2 border border-stone-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-immigration-500"
+                disabled={uploadingDoc}
+              />
+              <p className="text-xs text-stone-500 mt-1">Accepted: PDF, DOC, DOCX, JPG, PNG, GIF (Max 10MB)</p>
+            </div>
+            <button
+              type="submit"
+              disabled={!selectedFile || uploadingDoc}
+              className="px-4 py-2 bg-immigration-700 text-white font-semibold rounded-lg hover:bg-immigration-800 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+            >
+              {uploadingDoc ? "Uploading..." : "Upload Document"}
+            </button>
+          </form>
+        </div>
 
         {/* Status Update */}
         <div className="rounded-2xl border border-stone-200 bg-white p-6 mb-6">
