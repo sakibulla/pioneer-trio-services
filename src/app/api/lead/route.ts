@@ -78,11 +78,20 @@ export async function POST(request: Request) {
         },
       };
 
-      await fetch(`${backendUrl}/immigration/assessments`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(quickEnquiryPayload),
-      });
+      try {
+        const assessmentRes = await fetch(`${backendUrl}/immigration/assessments`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(quickEnquiryPayload),
+        });
+        console.log("[lead-assessment] Backend response status:", assessmentRes.status);
+        if (!assessmentRes.ok) {
+          const errorText = await assessmentRes.text();
+          console.error("[lead-assessment-error]", errorText);
+        }
+      } catch (assessmentError) {
+        console.error("[lead-assessment-error]", assessmentError);
+      }
     } else if (data.formType !== "notify") {
       // For other form types, forward to contact/general
       await fetch(`${backendUrl}/contact/general`, {
