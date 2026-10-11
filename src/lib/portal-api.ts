@@ -150,4 +150,74 @@ export const portalApi = {
     });
     return res.json();
   },
+
+  // Coordinator methods
+  getQuickInquiries: async (token: string) => {
+    const res = await fetch(`${BACKEND_URL}/contact/inquiries?status=PENDING`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return res.json();
+  },
+
+  getPendingAssessments: async (token: string) => {
+    const res = await fetch(`${BACKEND_URL}/immigration/assessments?status=PENDING&assigned_to=me`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return res.json();
+  },
+
+  acceptAssessment: async (token: string, assessmentId: string) => {
+    const res = await fetch(`${BACKEND_URL}/immigration/assessments/${assessmentId}/accept`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    });
+    return res.json();
+  },
+
+  // Matchmaker methods
+  getMatrimonialProfiles: async (token: string) => {
+    const res = await fetch(`${BACKEND_URL}/matrimonial/profiles`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return res.json();
+  },
+
+  getMatches: async (token: string) => {
+    const res = await fetch(`${BACKEND_URL}/matrimonial/matches?status=PENDING`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return res.json();
+  },
+
+  // Admin methods
+  getAllCases: async (token: string) => {
+    const res = await fetch(`${BACKEND_URL}/immigration/cases?admin=true`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return res.json();
+  },
+
+  getAllLeads: async (token: string) => {
+    const res = await fetch(`${BACKEND_URL}/contact/leads?admin=true`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return res.json();
+  },
+
+  getAllProfiles: async (token: string) => {
+    const res = await fetch(`${BACKEND_URL}/matrimonial/profiles?admin=true`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return res.json();
+  },
+
+  getAllAssessments: async (token: string) => {
+    const res = await fetch(`${BACKEND_URL}/immigration/assessments?admin=true`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return res.json();
+  },
 };

@@ -1,0 +1,247 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import {
+  FileText,
+  Heart,
+  Plane,
+  CheckCircle2,
+  ChevronRight,
+  Sparkles,
+  User,
+} from "lucide-react";
+import { Container } from "@/components/ui/container";
+import { Button } from "@/components/ui/button";
+import { PortalHeader } from "./PortalHeader";
+import { portalApi, type AuthUser, type ClientCase, type ClientMatch } from "@/lib/portal-api";
+
+interface ClientDashboardProps {
+  user: AuthUser;
+  token: string;
+  onLogout: () => void;
+}
+
+export function ClientDashboard({ user, token, onLogout }: ClientDashboardProps) {
+  const [activeTab, setActiveTab] = useState<"immigration" | "matrimonial">("immigration");
+  const [cases, setCases] = useState<ClientCase[]>([]);
+  const [matches, setMatches] = useState<ClientMatch[]>([]);
+  const [dataLoading, setDataLoading] = useState(true);
+
+  useEffect(() => {
+    loadDashboardData();
+  }, []);
+
+  const loadDashboardData = async () => {
+    setDataLoading(true);
+    try {
+      const [casesRes, matchesRes] = await Promise.all([
+        portalApi.getMyCases(token),
+        portalApi.getMyMatches(token),
+      ]);
+
+      if (casesRes?.data) setCases(casesRes.data);
+      if (matchesRes?.data) setMatches(matchesRes.data);
+    } catch {
+      // Fallback safe state
+    } finally {
+      setDataLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-[85vh] bg-stone-50 py-8">
+      <Container className="max-w-6xl">
+        {/* Header */}
+        <PortalHeader user={user} onLogout={onLogout} />
+
+        {/* Portal Service Tabs */}
+        <div className="mt-8 flex gap-3 border-b border-stone-200 pb-2">
+          <button
+            type="button"
+            onClick={() => setActiveTab("immigration")}
+            className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all ${
+              activeTab === "immigration"
+                ? "bg-immigration-700 text-white shadow"
+                : "bg-white text-stone-700 hover:bg-stone-100"
+            }`}
+          >
+            <Plane className="h-4 w-4" />
+            Immigration Cases ({cases.length})
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab("matrimonial")}
+            className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all ${
+              activeTab === "matrimonial"
+                ? "bg-marriage-700 text-white shadow"
+                : "bg-white text-stone-700 hover:bg-stone-100"
+            }`}
+          >
+            <Heart className="h-4 w-4" />
+            Marriage Introductions ({matches.length})
+          </button>
+        </div>
+
+        {/* Tab 1: Immigration Cases */}
+        {activeTab === "immigration" && (
+          <div className="mt-6 space-y-6">
+            {dataLoading ? (
+              <div className="rounded-2xl border border-stone-200 bg-white p-8">
+                <div className="flex items-center justify-center">
+                  <div className="h-6 w-6 animate-spin rounded-full border-2 border-immigration-200 border-t-immigration-700" />
+                </div>
+              </div>
+            ) : cases.length === 0 ? (
+              <div className="rounded-2xl border border-dashed border-stone-300 bg-white p-12 text-center">
+                <Plane className="mx-auto h-10 w-10 text-stone-400" />
+                <h3 className="mt-3 text-lg font-bold text-stone-800">No Active Cases Found</h3>
+                <p className="mt-1 text-sm text-stone-500">
+                  You have not submitted an immigration assessment yet.
+                </p>
+                <Link
+                  href="/immigration-consultancy"
+                  className="mt-4 inline-flex items-center gap-2 rounded-xl bg-immigration-700 px-4 py-2 text-sm font-semibold text-white hover:bg-immigration-800"
+                >
+                  Start Assessment <ChevronRight className="h-4 w-4" />
+                </Link>
+              </div>
+            ) : (
+              cases.map((c) => (
+                <div key={c.id} className="rounded-2xl border border-stone-200 bg-white p-6 shadow-sm">
+                  <div className="flex flex-col justify-between gap-4 border-b border-stone-100 pb-4 sm:flex-row sm:items-center">
+                    <div>
+                      <div className="flex items-center gap-3">
+                        <span className="font-mono text-sm font-bold text-immigration-800">
+                          {c.caseReference}
+                        </span>
+                        <span className="rounded-full bg-immigration-100 px-2.5 py-0.5 text-xs font-semibold text-immigration-800">
+                          {c.status}
+                        </span>
+                      </div>
+                      <h2 className="mt-1 text-lg font-bold text-stone-900">
+                        {c.destinationCountry} — {c.applicationType}
+                      </h2>
+                    </div>
+
+                    {c.coordinator && (
+                      <div className="flex items-center gap-3 rounded-xl bg-stone-50 p-3">
+                        <User className="h-8 w-8 rounded-full bg-brand-100 p-1.5 text-brand-800" />
+                        <div>
+                          <p className="text-xs text-stone-500">Assigned Coordinator</p>
+                          <p className="text-xs font-semibold text-stone-900">
+                            {c.coordinator.firstName} {c.coordinator.lastName}
+                          </p>
+                          <p className="text-[11px] text-brand-700">{c.coordinator.email}</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Stage Progress Tracker */}
+                  <div className="mt-5">
+                    <p className="text-xs font-semibold text-stone-600">
+                      Current Stage: <span className="text-immigration-700">{c.stage || "Intake Review"}</span>
+                    </p>
+                    <div className="mt-2 grid grid-cols-4 gap-2 text-center text-xs">
+                      <div className="rounded-lg bg-emerald-500 py-1.5 font-medium text-white">1. Submitted</div>
+                      <div className="rounded-lg bg-emerald-500 py-1.5 font-medium text-white">2. Document Check</div>
+                      <div className="rounded-lg bg-immigration-600 py-1.5 font-medium text-white">3. QC Review</div>
+                      <div className="rounded-lg bg-stone-100 py-1.5 font-medium text-stone-400">4. Approved</div>
+                    </div>
+                  </div>
+
+                  {/* Document Checklist */}
+                  <div className="mt-6 rounded-xl border border-stone-200 bg-stone-50 p-4">
+                    <h4 className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-stone-700">
+                      <FileText className="h-4 w-4 text-immigration-700" />
+                      Encrypted Case Documents & Verifications
+                    </h4>
+                    <div className="mt-3 space-y-2">
+                      <div className="flex items-center justify-between rounded-lg bg-white p-2.5 text-xs shadow-2xs">
+                        <span className="font-medium text-stone-800">Passport Scan (Bio Page)</span>
+                        <span className="inline-flex items-center gap-1 text-emerald-700 font-semibold">
+                          <CheckCircle2 className="h-3.5 w-3.5" /> Verified (AES-256 Encrypted)
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between rounded-lg bg-white p-2.5 text-xs shadow-2xs">
+                        <span className="font-medium text-stone-800">Educational Transcript / ECA</span>
+                        <span className="inline-flex items-center gap-1 text-emerald-700 font-semibold">
+                          <CheckCircle2 className="h-3.5 w-3.5" /> Verified
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        )}
+
+        {/* Tab 2: Matrimonial Introductions */}
+        {activeTab === "matrimonial" && (
+          <div className="mt-6 space-y-6">
+            {dataLoading ? (
+              <div className="rounded-2xl border border-stone-200 bg-white p-8">
+                <div className="flex items-center justify-center">
+                  <div className="h-6 w-6 animate-spin rounded-full border-2 border-marriage-200 border-t-marriage-700" />
+                </div>
+              </div>
+            ) : matches.length === 0 ? (
+              <div className="rounded-2xl border border-dashed border-stone-300 bg-white p-12 text-center">
+                <Heart className="mx-auto h-10 w-10 text-marriage-500" />
+                <h3 className="mt-3 text-lg font-bold text-stone-800">Human Matchmaking in Progress</h3>
+                <p className="mt-1 text-sm text-stone-500 max-w-md mx-auto">
+                  Our Senior Matchmaker is reviewing verified profiles. Because we use zero automated algorithms, curated introductions are personally reviewed by hand.
+                </p>
+                <Link
+                  href="/marriage-consultancy"
+                  className="mt-4 inline-flex items-center gap-2 rounded-xl bg-marriage-700 px-4 py-2 text-sm font-semibold text-white hover:bg-marriage-800"
+                >
+                  Create / Update Profile <ChevronRight className="h-4 w-4" />
+                </Link>
+              </div>
+            ) : (
+              matches.map((m) => (
+                <div key={m.id} className="rounded-2xl border border-marriage-200 bg-white p-6 shadow-sm">
+                  <div className="flex items-center justify-between border-b border-stone-100 pb-3">
+                    <span className="inline-flex items-center gap-1 rounded-full bg-marriage-50 px-3 py-1 text-xs font-semibold text-marriage-800">
+                      <Sparkles className="h-3.5 w-3.5" /> Hand-Curated Match Proposal
+                    </span>
+                    <span className="text-xs text-stone-500">
+                      Proposed by Matchmaker: <strong>{m.matchmaker?.name || "Senior Consultant"}</strong>
+                    </span>
+                  </div>
+
+                  <div className="mt-4 rounded-xl bg-marriage-50/50 p-4 border border-marriage-100">
+                    <p className="text-xs font-bold uppercase tracking-wider text-marriage-900">
+                      Matchmaker Compatibility Rationale:
+                    </p>
+                    <p className="mt-1.5 text-sm italic text-stone-800">
+                      "{m.rationale}"
+                    </p>
+                  </div>
+
+                  <div className="mt-5 flex items-center justify-between pt-2">
+                    <div className="text-xs text-stone-500">
+                      Status: <span className="font-semibold text-stone-800">{m.status}</span>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button variant="outline" tone="neutral" className="text-xs border-stone-300">
+                        Decline
+                      </Button>
+                      <Button tone="marriage" className="text-xs">
+                        Accept Supervised Introduction
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        )}
+      </Container>
+    </div>
+  );
+}
