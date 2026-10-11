@@ -70,7 +70,6 @@ export default function ClientPortalPage() {
             window.google.accounts.id.renderButton(btn, {
               theme: "outline",
               size: "large",
-              width: "100%",
               text: "signin_with",
             });
           } else if (!btn) {
