@@ -138,8 +138,8 @@ export function MarriageProfileForm({ user }: MarriageProfileFormProps) {
         },
       };
 
-      // Submit directly to backend API (CORS enabled)
-      const backendUrl = "https://pioneer-backend-5qhe.onrender.com/api/v1";
+      // Submit to backend API using same URL as portal-api
+      const backendUrl = process.env.REACT_APP_BACKEND_API_URL || process.env.NEXT_PUBLIC_BACKEND_API_URL || "http://localhost:5000/api/v1";
       const res = await fetch(`${backendUrl}/matrimonial/profiles`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
