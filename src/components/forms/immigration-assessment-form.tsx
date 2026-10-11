@@ -22,14 +22,33 @@ import { destinations } from "@/data/destinations";
 
 const TOTAL_STEPS = 8;
 
-export function ImmigrationAssessmentForm() {
+interface ImmigrationAssessmentFormProps {
+  user?: {
+    firstName: string;
+    lastName: string;
+    email: string;
+  } | null;
+}
+
+export function ImmigrationAssessmentForm({ user }: ImmigrationAssessmentFormProps) {
   const [currentStep, setCurrentStep] = useState(1);
   const [submitted, setSubmitted] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Load saved inquiry data from sessionStorage
+  // Load saved inquiry data from sessionStorage or use logged-in user info
   const getSavedInquiryData = () => {
+    // If user is logged in, pre-fill with their info
+    if (user) {
+      return {
+        sectionA: {
+          fullLegalName: `${user.firstName} ${user.lastName}`.trim(),
+          email: user.email,
+        },
+      };
+    }
+
+    // Otherwise try to load from sessionStorage
     if (typeof window !== "undefined") {
       const saved = sessionStorage.getItem("immigrationInquiry");
       if (saved) {

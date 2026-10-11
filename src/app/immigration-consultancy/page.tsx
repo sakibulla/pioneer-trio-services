@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Globe2, UserCheck, ReceiptText, ShieldCheck } from "lucide-react";
 import { Container } from "@/components/ui/container";
 import { SectionHeading } from "@/components/ui/section-heading";
@@ -11,6 +11,7 @@ import { DestinationsGrid } from "@/components/destinations-grid";
 import { ImmigrationInquiryForm } from "@/components/forms/immigration-inquiry-form";
 import { ImmigrationAssessmentForm } from "@/components/forms/immigration-assessment-form";
 import { gulfDisclaimer } from "@/data/destinations";
+import { portalApi, type AuthUser } from "@/lib/portal-api";
 
 const whyChooseUs = [
   { icon: Globe2, text: "One platform for multiple destination countries, instead of juggling separate local agents." },
@@ -48,6 +49,14 @@ const faqs = [
 
 export default function ImmigrationConsultancyPage() {
   const [showFullForm, setShowFullForm] = useState(false);
+  const [user, setUser] = useState<AuthUser | null>(null);
+
+  useEffect(() => {
+    const savedUser = portalApi.getCurrentUser();
+    if (savedUser) {
+      setUser(savedUser);
+    }
+  }, []);
 
   return (
     <>
@@ -150,7 +159,7 @@ export default function ImmigrationConsultancyPage() {
           </div>
 
           <div className="mt-8">
-            {showFullForm ? <ImmigrationAssessmentForm /> : <ImmigrationInquiryForm />}
+            {showFullForm ? <ImmigrationAssessmentForm user={user} /> : <ImmigrationInquiryForm />}
           </div>
         </Container>
       </section>
