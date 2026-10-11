@@ -266,7 +266,7 @@ export function ClientDashboard({ user, token, onLogout }: ClientDashboardProps)
             ) : (
               <>
                 {/* Show user's own profile first if it exists */}
-                {myProfile && (
+                {myProfile && myProfile.fullName && (
                   <div className="rounded-2xl border border-marriage-100 bg-marriage-50 p-6">
                     <div className="flex items-center justify-between border-b border-marriage-200 pb-4">
                       <div>
