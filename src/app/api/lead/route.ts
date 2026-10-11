@@ -79,11 +79,17 @@ export async function POST(request: Request) {
       };
 
       try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 120000); // 120 second timeout
+        
         const assessmentRes = await fetch(`${backendUrl}/immigration/assessments`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(quickEnquiryPayload),
+          signal: controller.signal,
         });
+        clearTimeout(timeoutId);
+        
         console.log("[lead-assessment] Backend response status:", assessmentRes.status);
         if (!assessmentRes.ok) {
           const errorText = await assessmentRes.text();
