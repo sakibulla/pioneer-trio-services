@@ -72,7 +72,7 @@ export async function POST(request: Request) {
 
   // Forward to Express Backend
   try {
-    const backendUrl = process.env.BACKEND_API_URL || "http://localhost:5000/api/v1";
+    const backendUrl = process.env.BACKEND_API_URL || process.env.NEXT_PUBLIC_BACKEND_API_URL || "http://localhost:5000/api/v1";
     const res = await fetch(`${backendUrl}/matrimonial/profiles`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },

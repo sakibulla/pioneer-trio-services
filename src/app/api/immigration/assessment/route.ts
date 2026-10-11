@@ -88,7 +88,7 @@ export async function POST(request: Request) {
 
   // Forward to Express Backend
   try {
-    const backendUrl = process.env.BACKEND_API_URL || "http://localhost:5000/api/v1";
+    const backendUrl = process.env.BACKEND_API_URL || process.env.NEXT_PUBLIC_BACKEND_API_URL || "http://localhost:5000/api/v1";
     
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 second timeout for full assessment
