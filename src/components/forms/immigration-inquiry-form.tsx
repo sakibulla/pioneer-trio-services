@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CheckCircle2 } from "lucide-react";
@@ -31,9 +31,11 @@ export function ImmigrationInquiryForm({ user }: ImmigrationInquiryFormProps) {
   const {
     register,
     handleSubmit,
+    reset,
     formState: { errors, isSubmitting },
   } = useForm<ImmigrationLead>({
     resolver: zodResolver(immigrationLeadSchema),
+    mode: "onChange",
     defaultValues: {
       formType: "immigration",
       name: user ? `${user.firstName} ${user.lastName}`.trim() : "",
@@ -43,6 +45,20 @@ export function ImmigrationInquiryForm({ user }: ImmigrationInquiryFormProps) {
       message: "",
     },
   });
+
+  // Update form when user data changes
+  useEffect(() => {
+    if (user) {
+      reset({
+        formType: "immigration",
+        name: `${user.firstName} ${user.lastName}`.trim(),
+        contact: user.email,
+        destinationCountry: "",
+        applicationType: "",
+        message: "",
+      });
+    }
+  }, [user, reset]);
 
   if (submitted) {
     return (

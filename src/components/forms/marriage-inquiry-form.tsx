@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CheckCircle2 } from "lucide-react";
@@ -14,9 +14,11 @@ export function MarriageInquiryForm({ user }: { user?: { firstName: string; last
   const {
     register,
     handleSubmit,
+    reset,
     formState: { errors, isSubmitting },
   } = useForm<MarriageLead>({
     resolver: zodResolver(marriageLeadSchema),
+    mode: "onChange",
     defaultValues: {
       formType: "marriage",
       name: user ? `${user.firstName} ${user.lastName}`.trim() : "",
@@ -26,6 +28,20 @@ export function MarriageInquiryForm({ user }: { user?: { firstName: string; last
       background: "",
     },
   });
+
+  // Update form when user data changes
+  useEffect(() => {
+    if (user) {
+      reset({
+        formType: "marriage",
+        name: `${user.firstName} ${user.lastName}`.trim(),
+        contact: user.email,
+        age: "",
+        currentLocation: "",
+        background: "",
+      });
+    }
+  }, [user, reset]);
 
   if (submitted) {
     return (
