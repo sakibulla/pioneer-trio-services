@@ -32,7 +32,7 @@ export async function POST(request: Request) {
     dateOfBirth: data.sectionA.dateOfBirth,
     gender: data.sectionA.gender.toUpperCase(),
     nationality: data.sectionA.nationality,
-    nidNumber: data.sectionA.nidNumber || null,
+    ...(data.sectionA.nidNumber && { nidNumber: data.sectionA.nidNumber }),
     passportNumber: data.sectionA.passportNumber,
     passportExpiry: data.sectionA.passportExpiry,
     maritalStatus: data.sectionA.maritalStatus.toUpperCase(),
@@ -40,28 +40,28 @@ export async function POST(request: Request) {
 
     destinationCountry: data.sectionB.destinationCountry,
     applicationType: data.sectionB.applicationType,
-    specificProgram: data.sectionB.specificProgram || null,
-    targetApplicationDate: data.sectionB.targetDate || null,
+    ...(data.sectionB.specificProgram && { specificProgram: data.sectionB.specificProgram }),
+    ...(data.sectionB.targetDate && { targetApplicationDate: data.sectionB.targetDate }),
     priorApplications: data.sectionB.appliedBefore === "yes",
     priorRefusals: data.sectionE.previousRefusal === "yes",
-    refusalDetails: data.sectionE.refusalDetails || data.sectionB.appliedBeforeOutcome || null,
+    ...(data.sectionE.refusalDetails || data.sectionB.appliedBeforeOutcome ? { refusalDetails: data.sectionE.refusalDetails || data.sectionB.appliedBeforeOutcome } : {}),
 
     employmentProfile: {
       employmentStatus: data.sectionC.employmentStatus.toUpperCase().replace("-", "_"),
-      currentEmployer: data.sectionC.employerName || null,
-      jobTitle: data.sectionC.jobTitle || null,
-      monthlyIncome: data.sectionC.monthlyIncome ? Number(data.sectionC.monthlyIncome) : 0,
-      businessName: data.sectionC.businessName || null,
-      businessType: data.sectionC.businessType || null,
+      ...(data.sectionC.employerName && { currentEmployer: data.sectionC.employerName }),
+      ...(data.sectionC.jobTitle && { jobTitle: data.sectionC.jobTitle }),
+      ...(data.sectionC.monthlyIncome && { monthlyIncome: Number(data.sectionC.monthlyIncome) }),
+      ...(data.sectionC.businessName && { businessName: data.sectionC.businessName }),
+      ...(data.sectionC.businessType && { businessType: data.sectionC.businessType }),
     },
 
     financialProfile: {
       currentBankBalance: data.sectionD.bankBalance ? Number(data.sectionD.bankBalance.replace(/[^0-9.]/g, "")) || 100000 : 100000,
       hasSponsor: data.sectionD.hasSponsor === "yes",
-      sponsorRelationship: data.sectionD.sponsorRelationship || null,
+      ...(data.sectionD.sponsorRelationship && { sponsorRelationship: data.sectionD.sponsorRelationship }),
       sourceOfFunds: data.sectionD.fundsSource || "Personal savings",
       unusualDeposits: data.sectionD.unusualDeposits === "yes",
-      unusualDepositDetails: data.sectionD.unusualDepositsNotes || null,
+      ...(data.sectionD.unusualDepositsNotes && { unusualDepositDetails: data.sectionD.unusualDepositsNotes }),
     },
 
     travelHistory: data.sectionE.countriesVisited
@@ -71,8 +71,7 @@ export async function POST(request: Request) {
             visitPurpose: "International Travel",
             visitDate: new Date().toISOString(),
             hadRefusal: data.sectionE.previousRefusal === "yes",
-            refusalCountry: undefined,
-            refusalReason: data.sectionE.refusalDetails || null,
+            ...(data.sectionE.refusalDetails && { refusalReason: data.sectionE.refusalDetails }),
           },
         ]
       : [],
@@ -80,9 +79,9 @@ export async function POST(request: Request) {
     homeCountryTies: {
       applicationPurpose: data.sectionF.applicationPurpose || "Employment",
       familyInBangladesh: true,
-      familyDetails: data.sectionF.familyInBangladesh || null,
+      ...(data.sectionF.familyInBangladesh && { familyDetails: data.sectionF.familyInBangladesh }),
       ownsProperty: data.sectionF.ownProperty === "yes",
-      propertyDetails: data.sectionF.propertyDetails || null,
+      ...(data.sectionF.propertyDetails && { propertyDetails: data.sectionF.propertyDetails }),
       intentToReturn: data.sectionF.intendToReturn || "Committed to ongoing family ties in Bangladesh",
     },
   };
