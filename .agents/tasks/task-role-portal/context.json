@@ -1,0 +1,21 @@
+{
+  "project_type": "Next.js 16.4.0 App Router with TypeScript, Tailwind CSS, and lucide-react icons",
+  "language": "TypeScript (strict mode)",
+  "build_system": "Next.js built-in (npm run build)",
+  "test_framework": "None currently configured; builds verify correctness",
+  "build_command": "npm run build",
+  "test_command": "npm run build (verifies TypeScript strict mode, ESLint, and build success)",
+  "verification_instructions": "Run 'npm run build' and confirm: (1) No TypeScript errors, (2) No ESLint errors, (3) Build completes successfully with all routes listed. The portal page must render without errors and branch correctly on user.role.",
+  "snapshot_or_generated_files": null,
+  "environment_constraints": "Backend API URL: process.env.NEXT_PUBLIC_BACKEND_API_URL || 'http://localhost:5000/api/v1'. Production: https://pioneer-backend-5qhe.onrender.com/api/v1. Portal page is a client component ('use client') with Google sign-in via GSI library.",
+  "contribution_requirements": "Read AGENTS.md: This is Next.js 16.4.0 with potential breaking changes from training data. Verify conventions in node_modules/next/dist/docs/ before writing new code. Follow existing patterns: TypeScript strict mode, Tailwind for styling, lucide-react for icons, React hooks for state, localStorage for client-side auth token storage.",
+  "key_patterns": "1. API client pattern: portalApi methods fetch from BACKEND_URL with Bearer token auth in headers. 2. Component pattern: Most pages use Container wrapper, rounded-2xl borders, shadow-sm, brand/immigration/marriage color tones. 3. Button pattern: Button component in src/components/ui/button.tsx accepts tone (brand/immigration/marriage/neutral) and variant (solid/outline). 4. Form pattern: Auth forms use email/password inputs with error display in red-50 boxes with AlertCircle icon.",
+  "relevant_files": [
+    "src/app/portal/page.tsx (current monolithic portal — to be refactored)",
+    "src/lib/portal-api.ts (API client — to be extended with new methods)",
+    "src/components/ui/button.tsx (Button component pattern to follow)",
+    "src/components/ui/container.tsx (Container pattern)",
+    "package.json (build/dev scripts)"
+  ],
+  "directory_structure": "src/app/ contains route pages; src/components/ contains reusable UI and forms; src/lib/ contains utilities and API clients; src/data/ contains static content. No src/components/portal/ exists yet — to be created."
+}

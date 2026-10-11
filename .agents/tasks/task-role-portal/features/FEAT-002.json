@@ -1,0 +1,31 @@
+{
+  "id": "FEAT-002",
+  "type": "feat",
+  "description": "Integrate role-based dashboard routing into portal/page.tsx. After successful auth, branch on user.role to render the appropriate dashboard (ClientDashboard, CoordinatorDashboard, MatchmakerDashboard, or AdminDashboard). Guard API Docs link visibility to ADMIN only.",
+  "status": "pending",
+  "steps": [
+    "Refactor src/app/portal/page.tsx: After successful login and token retrieval, add conditional branch based on user.role to render appropriate dashboard component",
+    "Add role branching logic: if role === 'client' render ClientDashboard; else if 'coordinator' render CoordinatorDashboard; else if 'matchmaker' render MatchmakerDashboard; else if 'admin' render AdminDashboard; else show error",
+    "Remove the old hardcoded immigration + matrimonial tab logic from portal/page.tsx (now extracted to ClientDashboard and AdminDashboard)",
+    "Update PortalHeader (or top bar render in each dashboard) to conditionally show API Docs link only when user.role === 'admin'",
+    "Update portal/page.tsx import statements to include all four dashboard components and PortalHeader",
+    "Verify that all dashboard components receive correct props (user, token, onLogout) and callbacks wire correctly",
+    "Test auth flow: login, register, Google sign-in should all work and route to correct dashboard"
+  ],
+  "acceptance_criteria": [
+    "Portal page renders without TypeScript errors after login",
+    "Client users see ClientDashboard with immigration and matrimonial tabs",
+    "Coordinator users see CoordinatorDashboard with QUICK INQUIRIES and FULL ASSESSMENTS tabs",
+    "Matchmaker users see MatchmakerDashboard with profiles and matches",
+    "Admin users see AdminDashboard with all data tabs",
+    "Unknown roles show error message",
+    "API Docs link is visible ONLY to ADMIN role",
+    "Logout works correctly from all dashboard types",
+    "npm run build passes with no errors"
+  ],
+  "verification": [
+    "npm run build — confirms full build succeeds and portal page compiles correctly"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

@@ -1,0 +1,7 @@
+{
+  "task_id": "task-role-portal",
+  "task_description": "Implement role-based portal access control with separate dashboards for CLIENT, COORDINATOR, MATCHMAKER, and ADMIN roles, including role-specific API methods and proper access guards for admin-only features.",
+  "status": "pending",
+  "feature_order": ["FEAT-001", "FEAT-002"],
+  "blocked_reason": null
+}

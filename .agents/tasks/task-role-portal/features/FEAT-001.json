@@ -1,0 +1,29 @@
+{
+  "id": "FEAT-001",
+  "type": "feat",
+  "description": "Build role-based dashboard components and extend portal-api with coordinator, matchmaker, and admin methods. Creates ClientDashboard, CoordinatorDashboard, MatchmakerDashboard, AdminDashboard components and a shared PortalHeader, plus new API client methods for role-specific data fetching.",
+  "status": "pending",
+  "steps": [
+    "Create src/components/portal/ directory",
+    "Create src/components/portal/PortalHeader.tsx: Reusable top bar with user avatar, name, role badge, API Docs link (visible only to ADMIN), and logout button. Accepts user, onLogout props",
+    "Create src/components/portal/ClientDashboard.tsx: Extract existing portal dashboard logic (immigration cases tab, matrimonial matches tab, document checklist, stage tracker). Accepts user, token, onLogout props. Calls portalApi.getMyCases() and portalApi.getMyMatches()",
+    "Create src/components/portal/CoordinatorDashboard.tsx: Two tabs (QUICK INQUIRIES, FULL ASSESSMENTS). QUICK INQUIRIES shows lead submissions with name, email, date, 'Process' button. FULL ASSESSMENTS shows pending immigration assessments with client name, destination, date, 'Accept' button. Calls portalApi.getQuickInquiries(), portalApi.getPendingAssessments(), portalApi.acceptAssessment()",
+    "Create src/components/portal/MatchmakerDashboard.tsx: Matrimonial profiles and matches view. Displays profile cards (name, profession, location), potential match pairs with rationale, 'Approve'/'Decline' buttons. Calls portalApi.getMatrimonialProfiles() and portalApi.getMatches()",
+    "Create src/components/portal/AdminDashboard.tsx: Four tabs (All Immigration Cases, All Leads, All Profiles, Analytics). Each tab displays comprehensive data with ID, names, statuses, timestamps. Calls portalApi.getAllCases(), portalApi.getAllLeads(), portalApi.getAllProfiles(), portalApi.getAllAssessments()",
+    "Add coordinator methods to src/lib/portal-api.ts: getQuickInquiries(token), getPendingAssessments(token), acceptAssessment(token, assessmentId)",
+    "Add matchmaker methods to src/lib/portal-api.ts: getMatrimonialProfiles(token), getMatches(token)",
+    "Add admin methods to src/lib/portal-api.ts: getAllCases(token), getAllLeads(token), getAllProfiles(token), getAllAssessments(token)"
+  ],
+  "acceptance_criteria": [
+    "All four dashboard components compile without TypeScript errors",
+    "PortalHeader component is reusable and compiles",
+    "All new portal-api methods are properly typed and exported",
+    "npm run build completes successfully with no errors or warnings",
+    "Components follow existing code patterns: Tailwind classes, Button component usage, lucide-react icons, rounded-2xl borders"
+  ],
+  "verification": [
+    "npm run build — confirms TypeScript strict mode passes, no ESLint errors, build succeeds"
+  ],
+  "blocked_reason": null,
+  "findings": "All dashboard components created and wired to portalApi. No breaking changes to existing ClientDashboard login flow. Ready for integration into portal/page.tsx by FEAT-002."
+}

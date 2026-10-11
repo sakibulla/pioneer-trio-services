@@ -10,6 +10,7 @@ import {
   ChevronRight,
   Sparkles,
   User,
+  RotateCw,
 } from "lucide-react";
 import { Container } from "@/components/ui/container";
 import { Button } from "@/components/ui/button";
@@ -27,13 +28,33 @@ export function ClientDashboard({ user, token, onLogout }: ClientDashboardProps)
   const [cases, setCases] = useState<ClientCase[]>([]);
   const [matches, setMatches] = useState<ClientMatch[]>([]);
   const [dataLoading, setDataLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   useEffect(() => {
     loadDashboardData();
-  }, []);
+    
+    // Listen for storage events from other tabs/windows
+    const handleStorageChange = () => {
+      loadDashboardData();
+    };
+    window.addEventListener("storage", handleStorageChange);
+    
+    // Listen for page visibility changes - refresh when user returns to tab
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        loadDashboardData();
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [token]);
 
   const loadDashboardData = async () => {
-    setDataLoading(true);
+    setIsRefreshing(true);
     try {
       const [casesRes, matchesRes] = await Promise.all([
         portalApi.getMyCases(token),
@@ -42,9 +63,10 @@ export function ClientDashboard({ user, token, onLogout }: ClientDashboardProps)
 
       if (casesRes?.data) setCases(casesRes.data);
       if (matchesRes?.data) setMatches(matchesRes.data);
-    } catch {
-      // Fallback safe state
+    } catch (error) {
+      console.error("Failed to load dashboard data:", error);
     } finally {
+      setIsRefreshing(false);
       setDataLoading(false);
     }
   };
@@ -81,6 +103,16 @@ export function ClientDashboard({ user, token, onLogout }: ClientDashboardProps)
           >
             <Heart className="h-4 w-4" />
             Marriage Introductions ({matches.length})
+          </button>
+
+          <button
+            type="button"
+            onClick={() => loadDashboardData()}
+            disabled={isRefreshing}
+            className="ml-auto flex items-center gap-1.5 rounded-xl border border-stone-200 px-3 py-2 text-xs font-semibold text-stone-700 hover:bg-stone-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+          >
+            <RotateCw className={`h-3.5 w-3.5 ${isRefreshing ? "animate-spin" : ""}`} />
+            {isRefreshing ? "Refreshing..." : "Refresh"}
           </button>
         </div>
 
