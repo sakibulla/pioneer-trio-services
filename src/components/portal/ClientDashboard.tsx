@@ -68,15 +68,21 @@ export function ClientDashboard({ user, token, onLogout }: ClientDashboardProps)
         setCases(casesRes.data);
       } else if (casesRes?.data) {
         setCases([casesRes.data]);
+      } else {
+        setCases([]);
       }
       
       if (matchesRes?.data && Array.isArray(matchesRes.data)) {
         setMatches(matchesRes.data);
       } else if (matchesRes?.data) {
         setMatches([matchesRes.data]);
+      } else {
+        setMatches([]);
       }
     } catch (error) {
       console.error("[ClientDashboard] Failed to load dashboard data:", error);
+      setCases([]);
+      setMatches([]);
     } finally {
       setIsRefreshing(false);
       setDataLoading(false);

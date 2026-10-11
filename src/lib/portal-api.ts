@@ -117,31 +117,63 @@ export const portalApi = {
   },
 
   getMyCases: async (token: string) => {
-    const res = await fetch(`${BACKEND_URL}/immigration/cases`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    const json = await res.json();
-    console.log("[getMyCases] Response:", json);
-    
-    // Handle different response formats
-    if (json.data) return json;
-    if (Array.isArray(json)) return { data: json };
-    if (json.cases) return { data: json.cases };
-    return { data: [] };
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+      
+      const res = await fetch(`${BACKEND_URL}/immigration/cases`, {
+        headers: { Authorization: `Bearer ${token}` },
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+      
+      if (!res.ok) {
+        console.warn("[getMyCases] API error:", res.status, res.statusText);
+        return { data: [] };
+      }
+      
+      const json = await res.json();
+      console.log("[getMyCases] Response:", json);
+      
+      // Handle different response formats
+      if (json.data) return json;
+      if (Array.isArray(json)) return { data: json };
+      if (json.cases) return { data: json.cases };
+      return { data: [] };
+    } catch (error) {
+      console.error("[getMyCases] Error:", error);
+      return { data: [] };
+    }
   },
 
   getMyMatches: async (token: string) => {
-    const res = await fetch(`${BACKEND_URL}/matrimonial/my-matches`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    const json = await res.json();
-    console.log("[getMyMatches] Response:", json);
-    
-    // Handle different response formats
-    if (json.data) return json;
-    if (Array.isArray(json)) return { data: json };
-    if (json.matches) return { data: json.matches };
-    return { data: [] };
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+      
+      const res = await fetch(`${BACKEND_URL}/matrimonial/my-matches`, {
+        headers: { Authorization: `Bearer ${token}` },
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+      
+      if (!res.ok) {
+        console.warn("[getMyMatches] API error:", res.status, res.statusText);
+        return { data: [] };
+      }
+      
+      const json = await res.json();
+      console.log("[getMyMatches] Response:", json);
+      
+      // Handle different response formats
+      if (json.data) return json;
+      if (Array.isArray(json)) return { data: json };
+      if (json.matches) return { data: json.matches };
+      return { data: [] };
+    } catch (error) {
+      console.error("[getMyMatches] Error:", error);
+      return { data: [] };
+    }
   },
 
   respondToMatch: async (token: string, matchId: string, response: "INTERESTED" | "NOT_INTERESTED") => {
