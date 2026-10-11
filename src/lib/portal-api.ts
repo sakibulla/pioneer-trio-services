@@ -662,6 +662,33 @@ export const portalApi = {
     }
   },
 
+  updateCase: async (token: string, caseId: string, updates: any) => {
+    try {
+      const currentToken = await refreshTokenIfNeeded();
+      const authToken = currentToken || token;
+
+      const res = await fetch(`${BACKEND_URL}/immigration/cases/${caseId}`, {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(updates),
+      });
+
+      if (!res.ok) {
+        const error = await res.text();
+        console.error("[updateCase] Error:", error);
+        return { success: false, error };
+      }
+      const json = await res.json();
+      return { success: true, data: json.data || json };
+    } catch (error) {
+      console.error("[updateCase] Error:", error);
+      return { success: false, error: String(error) };
+    }
+  },
+
   verifyDocument: async (token: string, documentId: string, verified: boolean) => {
     try {
       const currentToken = await refreshTokenIfNeeded();
