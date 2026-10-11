@@ -1,6 +1,13 @@
 import { NextResponse } from "next/server";
 import { immigrationAssessmentSchema } from "@/lib/immigration-assessment-schema";
 
+export async function GET() {
+  return NextResponse.json(
+    { error: "Method not allowed. Use POST instead." },
+    { status: 405 }
+  );
+}
+
 export async function POST(request: Request) {
   const json = await request.json().catch(() => null);
   if (!json) {
