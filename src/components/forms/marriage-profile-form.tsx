@@ -103,7 +103,6 @@ export function MarriageProfileForm({ user }: MarriageProfileFormProps) {
         institution: data.sectionC.institution,
         fieldOfStudy: data.sectionC.fieldOfStudy,
         currentProfession: data.sectionC.currentProfession,
-        jobTitle: data.sectionC.currentProfession,
         employer: data.sectionC.employer || "",
         incomeBracket: data.sectionC.incomeBracket || "",
 
