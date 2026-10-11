@@ -29,6 +29,7 @@ export function MarriageProfileForm({ user }: MarriageProfileFormProps) {
     handleSubmit,
     setValue,
     watch,
+    trigger,
     formState: { errors, isSubmitting },
   } = useForm<MarriageProfile>({
     resolver: zodResolver(marriageProfileSchema),
@@ -172,7 +173,14 @@ export function MarriageProfileForm({ user }: MarriageProfileFormProps) {
   }
 
   const nextStep = () => {
-    if (currentStep < TOTAL_STEPS) setCurrentStep(currentStep + 1);
+    if (currentStep < TOTAL_STEPS) {
+      // Trigger validation for current step before moving forward
+      trigger().then((isValid: boolean) => {
+        if (isValid) {
+          setCurrentStep(currentStep + 1);
+        }
+      });
+    }
   };
 
   const prevStep = () => {
