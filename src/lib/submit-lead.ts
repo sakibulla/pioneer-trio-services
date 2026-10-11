@@ -10,7 +10,7 @@ export async function submitLead(data: Lead): Promise<{ ok: boolean }> {
       const quickEnquiryPayload = {
         fullName: data.name,
         email: data.contact,
-        phone: ((data as any).phone || "0000000000").padEnd(8, "0"), // Ensure min 8 chars
+        phone: (data as any).phone || "00000",
         dateOfBirth: "1990-01-01",
         gender: "MALE",
         nationality: "Bangladeshi",
@@ -18,10 +18,10 @@ export async function submitLead(data: Lead): Promise<{ ok: boolean }> {
         passportNumber: "PLACEHOLDER",
         passportExpiry: "2030-12-31",
         maritalStatus: "SINGLE",
-        currentAddress: "Not provided location", // Ensure min 5 chars
+        currentAddress: "TBD",
         
-        destinationCountry: (data as any).destinationCountry || "Undetermined", // Min 2 chars
-        applicationType: (data as any).applicationType || "General inquiry", // Min 2 chars
+        destinationCountry: (data as any).destinationCountry || "TBD",
+        applicationType: (data as any).applicationType || "TBD",
         specificProgram: "",
         targetApplicationDate: "",
         priorApplications: false,
@@ -56,12 +56,12 @@ export async function submitLead(data: Lead): Promise<{ ok: boolean }> {
         travelHistory: [],
 
         homeCountryTies: {
-          applicationPurpose: (data as any).message || "Quick enquiry submitted", // Min 5 required
+          applicationPurpose: (data as any).message || "Quick enquiry",
           familyInBangladesh: true,
           familyDetails: "",
           ownsProperty: false,
           propertyDetails: "",
-          intentToReturn: "To return to Bangladesh", // Min 5 required
+          intentToReturn: "Undecided",
         },
       };
 
@@ -105,64 +105,60 @@ export async function submitLead(data: Lead): Promise<{ ok: boolean }> {
 
       // Match validator schema exactly
       const marriageQuickPayload = {
-        // Required fields
         fullName: data.name,
-        dateOfBirth: "1990-01-01", // Will be transformed to Date by validator
+        dateOfBirth: "1990-01-01",
         gender: "MALE",
         maritalStatus: "SINGLE",
         currentCountry: country,
         currentCity: city,
         motherTongue: "Bengali",
-        languagesSpoken: ["Bengali", "English"], // Min 1 language required
+        languagesSpoken: ["Bengali"],
         
-        fatherOccupation: "Professional", // Min 2 chars
-        motherOccupation: "Homemaker", // Min 2 chars
+        fatherOccupation: "Professional",
+        motherOccupation: "Homemaker",
         familyType: "NUCLEAR",
-        familyLocation: "Bangladesh", // Min 2 chars
+        familyLocation: "BD",
         
-        educationLevel: "Graduate", // Min 2 chars
-        currentProfession: "Professional", // Min 2 chars
+        educationLevel: "Graduate",
+        currentProfession: "Professional",
         
-        religion: "Islam", // Min 2 chars
+        religion: "Islam",
+        religiousPractice: "Moderate",
+        
+        dietaryPreference: "Halal",
+        smokingHabits: "No",
+        drinkingHabits: "No",
         
         email: email,
-        phone: phone, // Min 8 chars
+        phone: phone,
         
-        // Required for validator but can be minimal
-        height: 170, // Optional but providing valid int
-        bloodGroup: "B+", // Optional
-        currentNationality: "Bangladeshi", // Default if not provided
-        visaStatus: "Citizen", // Optional
-        siblingsCount: 1, // Default 0 if not provided
-        siblingsMarried: 0, // Default 0 if not provided
-        familyDescription: "Profile submitted via quick form", // Optional
+        bloodGroup: "B+",
+        visaStatus: "Citizen",
+        siblingsCount: 1,
+        siblingsMarried: 0,
+        familyDescription: "",
         
-        institution: "University", // Optional
-        fieldOfStudy: "General", // Optional
-        jobTitle: "Professional", // Optional
-        employer: "Private", // Optional
-        incomeBracket: "Moderate", // Optional
+        institution: "Unspecified",
+        fieldOfStudy: "General",
+        jobTitle: "Professional",
+        employer: "Private",
+        incomeBracket: "Moderate",
         
-        sect: "Sunni", // Optional
-        religiousPractice: "Moderate", // Optional
-        ethnicity: "Bengali", // Optional
+        sect: "Sunni",
+        ethnicity: "Bengali",
         
-        dietaryPreference: "Halal", // Optional
-        smokingHabits: "Non-smoker", // Optional
-        drinkingHabits: "No", // Optional
-        hobbies: "Reading", // Optional
-        
-        preferredContactMethod: "Email", // Default if not provided
+        hobbies: "",
+        preferredContactMethod: "Email",
         
         partnerPreference: {
-          ageMin: 20, // Required
-          ageMax: 40, // Required
-          preferredLocations: ["Bangladesh", "UK", "USA", "Canada"], // Min 1 required
-          preferredEducation: "Graduate", // Optional
-          preferredProfession: "Professional", // Optional
-          religiousPreference: "Islam", // Optional
-          otherPreferences: (data as any).background || "Looking for compatible match", // Optional
-          dealbreakers: "", // Optional
+          ageMin: 20,
+          ageMax: 40,
+          preferredLocations: [country || "Bangladesh"],
+          preferredEducation: "Graduate",
+          preferredProfession: "Professional",
+          religiousPreference: "Islam",
+          otherPreferences: (data as any).background || "Compatible match",
+          dealbreakers: "",
         },
       };
 
