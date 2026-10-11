@@ -400,11 +400,15 @@ export const portalApi = {
   // Admin methods
   getAllCases: async (token: string) => {
     try {
+      // Refresh token if needed
+      const currentToken = await refreshTokenIfNeeded();
+      const authToken = currentToken || token;
+      
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 5000);
       
       const res = await fetch(`${BACKEND_URL}/immigration/cases`, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { Authorization: `Bearer ${authToken}` },
         signal: controller.signal,
       });
       clearTimeout(timeoutId);
@@ -421,16 +425,24 @@ export const portalApi = {
 
   getAllLeads: async (token: string) => {
     try {
+      // Refresh token if needed
+      const currentToken = await refreshTokenIfNeeded();
+      const authToken = currentToken || token;
+      
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 5000);
       
-      const res = await fetch(`${BACKEND_URL}/admin/dashboard`, {
-        headers: { Authorization: `Bearer ${token}` },
+      const res = await fetch(`${BACKEND_URL}/contact/submissions`, {
+        headers: { Authorization: `Bearer ${authToken}` },
         signal: controller.signal,
       });
       clearTimeout(timeoutId);
       
       if (!res.ok) return { data: [] };
+      const json = await res.json();
+      if (json.data?.items) return { data: json.data.items };
+      if (json.items) return { data: json.items };
+      if (json.data && Array.isArray(json.data)) return { data: json.data };
       return { data: [] };
     } catch {
       return { data: [] };
@@ -439,11 +451,15 @@ export const portalApi = {
 
   getAllProfiles: async (token: string) => {
     try {
+      // Refresh token if needed
+      const currentToken = await refreshTokenIfNeeded();
+      const authToken = currentToken || token;
+      
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 5000);
       
       const res = await fetch(`${BACKEND_URL}/matrimonial/profiles`, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { Authorization: `Bearer ${authToken}` },
         signal: controller.signal,
       });
       clearTimeout(timeoutId);
@@ -461,11 +477,15 @@ export const portalApi = {
 
   getAllAssessments: async (token: string) => {
     try {
+      // Refresh token if needed
+      const currentToken = await refreshTokenIfNeeded();
+      const authToken = currentToken || token;
+      
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 5000);
       
       const res = await fetch(`${BACKEND_URL}/immigration/cases`, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { Authorization: `Bearer ${authToken}` },
         signal: controller.signal,
       });
       clearTimeout(timeoutId);

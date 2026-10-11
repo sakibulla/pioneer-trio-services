@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { Plane, Heart, Mail, BarChart3, Users } from "lucide-react";
 import { Container } from "@/components/ui/container";
 import { PortalHeader } from "./PortalHeader";
-import type { AuthUser } from "@/lib/portal-api";
+import { portalApi, type AuthUser } from "@/lib/portal-api";
 
 interface AdminCaseItem {
   id: string;
@@ -73,27 +73,74 @@ export function AdminDashboard({ user, token, onLogout }: AdminDashboardProps) {
   const loadDashboardData = async () => {
     setDataLoading(true);
     try {
-      // Placeholder: These will call actual API methods once implemented
-      // const casesRes = await portalApi.getAllCases(token);
-      // const leadsRes = await portalApi.getAllLeads(token);
-      // const profilesRes = await portalApi.getAllProfiles(token);
+      // Call actual API methods
+      const casesRes = await portalApi.getAllCases(token);
+      const leadsRes = await portalApi.getAllLeads(token);
+      const profilesRes = await portalApi.getAllProfiles(token);
       
-      // For now, show empty/loading state
-      setCases([]);
-      setLeads([]);
-      setProfiles([]);
+      // Process cases data
+      const casesData = (casesRes?.data || []) as any[];
+      const formattedCases: AdminCaseItem[] = casesData.map((c) => ({
+        id: c.id || c.caseReference || "N/A",
+        clientName: c.clientName || "Unknown",
+        destinationCountry: c.destinationCountry || "N/A",
+        status: c.status || "SUBMITTED",
+        coordinator: c.coordinator?.email || undefined,
+        submittedAt: c.submittedAt || new Date().toISOString(),
+      }));
+      
+      // Process leads data
+      const leadsData = (leadsRes?.data || []) as any[];
+      const formattedLeads: AdminLeadItem[] = leadsData.map((l) => ({
+        id: l.id || "N/A",
+        submitterName: l.submitterName || l.name || "Unknown",
+        inquiryType: l.inquiryType || l.type || "General",
+        email: l.email || "N/A",
+        status: l.status || "NEW",
+        submittedAt: l.submittedAt || l.createdAt || new Date().toISOString(),
+      }));
+      
+      // Process profiles data
+      const profilesData = (profilesRes?.data || []) as any[];
+      const formattedProfiles: AdminProfileItem[] = profilesData.map((p) => ({
+        id: p.id || "N/A",
+        fullName: p.fullName || "Unknown",
+        status: p.status || "PENDING",
+        matchmakerAssigned: undefined,
+        createdAt: p.createdAt || new Date().toISOString(),
+      }));
+      
+      // Set data
+      setCases(formattedCases);
+      setLeads(formattedLeads);
+      setProfiles(formattedProfiles);
+      
+      // Calculate analytics
+      const activeCasesCount = formattedCases.filter(
+        (c) => c.status === "ACTIVE" || c.status === "UNDER_REVIEW"
+      ).length;
+      const pendingCasesCount = formattedCases.filter(
+        (c) => c.status === "SUBMITTED"
+      ).length;
+      const verifiedProfilesCount = formattedProfiles.filter(
+        (p) => p.status === "APPROVED"
+      ).length;
+      
       setAnalytics({
-        totalCases: 0,
-        activeCases: 0,
-        pendingAssessments: 0,
-        totalLeads: 0,
-        totalProfiles: 0,
-        verifiedProfiles: 0,
+        totalCases: formattedCases.length,
+        activeCases: activeCasesCount,
+        pendingAssessments: pendingCasesCount,
+        totalLeads: formattedLeads.length,
+        totalProfiles: formattedProfiles.length,
+        verifiedProfiles: verifiedProfilesCount,
         coordinatorsCount: 0,
         matchmakersCount: 0,
       });
-    } catch {
-      // Error handling
+    } catch (err) {
+      console.error("[AdminDashboard] Error loading data:", err);
+      setCases([]);
+      setLeads([]);
+      setProfiles([]);
     } finally {
       setDataLoading(false);
     }
