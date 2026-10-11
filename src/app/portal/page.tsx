@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import {
   ShieldCheck,
@@ -26,6 +26,7 @@ export default function ClientPortalPage() {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const gsiInitializedRef = useRef(false);
 
   // Auth Form States
   const [isLoginView, setIsLoginView] = useState(true);
@@ -50,14 +51,19 @@ export default function ClientPortalPage() {
   }, []);
 
   useEffect(() => {
+    // Only load GSI once - never reinitialize
+    if (gsiInitializedRef.current) return;
+
     const loadGSI = () => {
-      if (typeof window !== "undefined" && window.google?.accounts?.id) {
+      if (typeof window !== "undefined" && window.google?.accounts?.id && !gsiInitializedRef.current) {
+        gsiInitializedRef.current = true;
+        
         window.google.accounts.id.initialize({
           client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "",
           callback: handleGoogleSignIn,
         });
         
-        // Retry rendering button until element exists (guards against hydration race)
+        // Retry rendering button until element exists
         const renderButton = () => {
           const btn = document.getElementById("google-signin-btn");
           if (btn && btn.children.length === 0) {
@@ -68,7 +74,6 @@ export default function ClientPortalPage() {
               text: "signin_with",
             });
           } else if (!btn) {
-            // Element not ready yet, retry after a short delay
             setTimeout(renderButton, 100);
           }
         };
@@ -77,28 +82,26 @@ export default function ClientPortalPage() {
       }
     };
 
-    // Only load GSI once on mount, not on every user/token change
     if (!user && !token && typeof window !== "undefined") {
       // Check if script already exists
-      if (!document.querySelector('script[src="https://accounts.google.com/gsi/client"]')) {
+      const existingScript = document.querySelector('script[src="https://accounts.google.com/gsi/client"]');
+      
+      if (existingScript) {
+        // Script already loaded, just initialize
+        if (window.google?.accounts?.id) {
+          loadGSI();
+        }
+      } else {
+        // Add script for first time
         const script = document.createElement("script");
         script.src = "https://accounts.google.com/gsi/client";
         script.async = true;
         script.defer = true;
         script.onload = loadGSI;
         document.head.appendChild(script);
-
-        return () => {
-          if (document.head.contains(script)) {
-            document.head.removeChild(script);
-          }
-        };
-      } else {
-        // Script already loaded, just render button
-        loadGSI();
       }
     }
-  }, []); // Empty dependency array - only run once on mount
+  }, []); // Empty dependency array - truly runs only once
 
   const handleAuthSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
