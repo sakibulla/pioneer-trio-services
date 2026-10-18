@@ -1,46 +1,61 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+/**
+ * POST /api/password-reset/confirm
+ * Validates the reset token against the real backend database and sets the new password.
+ */
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { code, newPassword } = body;
+    const { token, newPassword } = body;
 
-    if (!code || !newPassword) {
+    if (!token || !newPassword) {
       return NextResponse.json(
-        { success: false, message: 'Code and new password are required' },
+        { success: false, message: 'Reset token and new password are required' },
         { status: 400 }
       );
     }
 
-    if (code.length !== 6) {
+    const backendUrl =
+      process.env.BACKEND_API_URL ||
+      process.env.NEXT_PUBLIC_BACKEND_API_URL ||
+      'http://localhost:5000/api/v1';
+
+    // Forward to the real backend which validates the DB token and updates the password
+    const res = await fetch(`${backendUrl}/auth/reset-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token, newPassword }),
+    });
+
+    if (res.ok) {
+      const data = await res.json().catch(() => ({}));
       return NextResponse.json(
-        { success: false, message: 'Invalid code format' },
-        { status: 400 }
+        {
+          success: true,
+          message:
+            data.message ||
+            'Password reset successful. You can now log in with your new password.',
+        },
+        { status: 200 }
+      );
+    } else {
+      const errorData = await res.json().catch(() => ({}));
+      console.error('[password-reset/confirm] Backend error:', errorData);
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            errorData.message ||
+            'Invalid or expired reset token. Please request a new password reset.',
+        },
+        { status: res.status }
       );
     }
-
-    // TODO: In production:
-    // 1. Look up code in database
-    // 2. Check if code is expired (10 minutes)
-    // 3. Verify code matches email
-    // 4. Hash new password
-    // 5. Update user password in database
-    // 6. Delete/invalidate the code
-    // 7. Send confirmation email
-
-    console.log(`✅ Password reset with code ${code}`);
-
-    return NextResponse.json(
-      {
-        success: true,
-        message: 'Password reset successful. You can now login with your new password.',
-      },
-      { status: 200 }
-    );
   } catch (error) {
-    console.error('Password reset error:', error);
+    console.error('[password-reset/confirm] Error:', error);
     return NextResponse.json(
-      { success: false, message: 'An error occurred resetting your password' },
+      { success: false, message: 'An error occurred. Please try again.' },
       { status: 500 }
     );
   }

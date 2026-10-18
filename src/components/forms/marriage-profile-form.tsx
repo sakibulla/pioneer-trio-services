@@ -148,12 +148,48 @@ export function MarriageProfileForm({ user }: MarriageProfileFormProps) {
       clearTimeout(timeoutId);
       console.log("[Marriage Profile Submit] Response status:", res.status);
 
+      let profileId: string | null = null;
       if (res.ok) {
-        setSubmitted(true);
+        const responseData = await res.json().catch(() => ({}));
+        // Extract profile ID from nested backend response: { data: { data: { id: ... } } }
+        profileId =
+          responseData?.data?.data?.id ||
+          responseData?.data?.id ||
+          null;
+        console.log("[Marriage Profile Submit] Extracted Profile ID:", profileId);
       } else {
         console.error("[Marriage Profile Submit] Error response status:", res.status);
-        setSubmitted(true);
       }
+
+      // Step 2: Upload photos to the backend separately via multipart FormData
+      if (photos.length > 0 && profileId) {
+        const backendUrl =
+          process.env.NEXT_PUBLIC_BACKEND_API_URL ||
+          "http://localhost:5000/api/v1";
+
+        for (let i = 0; i < photos.length; i++) {
+          const formData = new FormData();
+          formData.append("photo", photos[i]);
+          formData.append("displayOrder", String(i + 1));
+          try {
+            const photoRes = await fetch(
+              `${backendUrl}/matrimonial/profiles/${profileId}/photos`,
+              { method: "POST", body: formData }
+            );
+            if (photoRes.ok) {
+              console.log(`[Marriage Profile] Photo ${i + 1} uploaded successfully`);
+            } else {
+              console.warn(`[Marriage Profile] Photo ${i + 1} upload returned status ${photoRes.status}`);
+            }
+          } catch (photoErr) {
+            console.error(`[Marriage Profile] Photo ${i + 1} upload failed:`, photoErr);
+          }
+        }
+      } else if (photos.length > 0 && !profileId) {
+        console.warn("[Marriage Profile] Photos queued but no profile ID returned — staff will follow up.");
+      }
+
+      setSubmitted(true);
     } catch (err: any) {
       console.error("[Marriage Profile Submit] Error:", err);
       setSubmitted(true);

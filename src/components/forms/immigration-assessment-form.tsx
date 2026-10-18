@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CheckCircle2, ChevronLeft, ChevronRight } from "lucide-react";
+import { CheckCircle2, ChevronLeft, ChevronRight, UploadCloud, FileText, X } from "lucide-react";
 import {
   immigrationAssessmentSchema,
   type ImmigrationAssessment,
@@ -35,6 +35,31 @@ export function ImmigrationAssessmentForm({ user }: ImmigrationAssessmentFormPro
   const [submitted, setSubmitted] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [pdfs, setPdfs] = useState<File[]>([]);
+  const [pdfError, setPdfError] = useState("");
+
+  const handlePdfUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setPdfError("");
+    if (!e.target.files) return;
+    const filesArray = Array.from(e.target.files);
+    const combined = [...pdfs, ...filesArray];
+    if (combined.length > 5) {
+      setPdfError("Maximum 5 documents allowed. Please remove some first.");
+      return;
+    }
+    const invalidFiles = filesArray.filter((f) => f.type !== "application/pdf");
+    if (invalidFiles.length > 0) {
+      setPdfError("Only PDF files are accepted.");
+      return;
+    }
+    setPdfs(combined.slice(0, 5));
+    // Reset the input so the same file can be re-added after removal
+    e.target.value = "";
+  };
+
+  const removePdf = (index: number) => {
+    setPdfs(pdfs.filter((_, i) => i !== index));
+  };
 
   // Load saved inquiry data from sessionStorage or use logged-in user info
   const getSavedInquiryData = () => {
@@ -115,11 +140,48 @@ export function ImmigrationAssessmentForm({ user }: ImmigrationAssessmentFormPro
       console.log("[Assessment Submit] Response status:", res.status);
       
       if (res.ok) {
-        setSubmitted(true);
+        const responseData = await res.json().catch(() => ({}));
         // Clear session storage after successful submission
         if (typeof window !== "undefined") {
           sessionStorage.removeItem("immigrationInquiry");
         }
+
+        // Extract case ID to upload attached PDF documents
+        const caseId =
+          responseData?.data?.data?.id ||
+          responseData?.data?.id ||
+          null;
+        console.log("[Assessment Submit] Case ID:", caseId);
+
+        if (pdfs.length > 0 && caseId) {
+          const backendUrl =
+            process.env.NEXT_PUBLIC_BACKEND_API_URL ||
+            "http://localhost:5000/api/v1";
+
+          for (let i = 0; i < pdfs.length; i++) {
+            const formData = new FormData();
+            formData.append("file", pdfs[i]);
+            // Label each document by its position; staff will categorise them
+            formData.append("documentType", "SUPPORTING_DOCUMENT");
+            try {
+              const docRes = await fetch(
+                `${backendUrl}/immigration/cases/${caseId}/documents`,
+                { method: "POST", body: formData }
+              );
+              if (docRes.ok) {
+                console.log(`[Assessment] Document ${i + 1} (${pdfs[i].name}) uploaded`);
+              } else {
+                console.warn(`[Assessment] Document ${i + 1} upload returned status ${docRes.status}`);
+              }
+            } catch (docErr) {
+              console.error(`[Assessment] Document ${i + 1} upload failed:`, docErr);
+            }
+          }
+        } else if (pdfs.length > 0 && !caseId) {
+          console.warn("[Assessment] Documents attached but no case ID returned — staff will follow up.");
+        }
+
+        setSubmitted(true);
       } else {
         let msg = "Submission failed. Please try again.";
         try {
@@ -916,6 +978,68 @@ export function ImmigrationAssessmentForm({ user }: ImmigrationAssessmentFormPro
               Don&apos;t worry if you&apos;re missing some documents — your coordinator will help you
               obtain what you need.
             </p>
+
+            {/* PDF Upload Section */}
+            <div className="mt-6">
+              <h4 className="text-base font-semibold text-stone-900 flex items-center gap-2">
+                <UploadCloud className="h-5 w-5 text-immigration-600" />
+                Upload Supporting Documents (Optional)
+              </h4>
+              <p className="mt-1 text-sm text-stone-500">
+                If you already have documents ready (passport copy, bank statements, employment letter, etc.), you can attach them now. PDF files only, max 5 documents.
+              </p>
+
+              {pdfError && (
+                <p className="mt-2 rounded-lg bg-red-50 px-3 py-2 text-xs font-semibold text-red-700">{pdfError}</p>
+              )}
+
+              {/* Uploaded file list */}
+              {pdfs.length > 0 && (
+                <ul className="mt-3 space-y-2">
+                  {pdfs.map((file, idx) => (
+                    <li
+                      key={idx}
+                      className="flex items-center justify-between rounded-lg border border-stone-200 bg-white px-3 py-2 text-sm"
+                    >
+                      <span className="flex items-center gap-2 text-stone-700 truncate">
+                        <FileText className="h-4 w-4 shrink-0 text-immigration-500" />
+                        <span className="truncate max-w-[220px]">{file.name}</span>
+                        <span className="shrink-0 text-xs text-stone-400">
+                          ({(file.size / 1024).toFixed(0)} KB)
+                        </span>
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => removePdf(idx)}
+                        className="ml-2 shrink-0 text-red-500 hover:text-red-700"
+                        aria-label={`Remove ${file.name}`}
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+
+              {/* Upload button */}
+              {pdfs.length < 5 && (
+                <label
+                  htmlFor="pdf-upload"
+                  className="mt-3 flex cursor-pointer items-center justify-center gap-2 rounded-xl border-2 border-dashed border-immigration-300 bg-immigration-50/40 px-4 py-4 text-sm font-medium text-immigration-700 transition hover:border-immigration-500 hover:bg-immigration-50"
+                >
+                  <UploadCloud className="h-5 w-5" />
+                  {pdfs.length === 0 ? "Attach PDF documents" : `Add more (${pdfs.length}/5)`}
+                  <input
+                    id="pdf-upload"
+                    type="file"
+                    accept="application/pdf"
+                    multiple
+                    onChange={handlePdfUpload}
+                    className="sr-only"
+                  />
+                </label>
+              )}
+            </div>
           </div>
         )}
 

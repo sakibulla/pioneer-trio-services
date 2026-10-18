@@ -1,45 +1,62 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Eye, EyeOff, ArrowLeft, CheckCircle2, AlertCircle } from "lucide-react";
+import { useParams } from "next/navigation";
+import { Eye, EyeOff, ArrowLeft, CheckCircle2, AlertCircle, Loader2, ShieldAlert } from "lucide-react";
 import { Container } from "@/components/ui/container";
 import { Button } from "@/components/ui/button";
 
 export default function ResetPasswordPage() {
-  const [code, setCode] = useState("");
+  const params = useParams();
+  const token = params?.token as string | undefined;
+
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [validating, setValidating] = useState(true);
+  const [tokenValid, setTokenValid] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
 
+  // On mount, validate the token from the URL before showing the form
+  useEffect(() => {
+    if (!token) {
+      setValidating(false);
+      setTokenValid(false);
+      return;
+    }
+
+    const validate = async () => {
+      try {
+        const res = await fetch(
+          `/api/password-reset/validate?token=${encodeURIComponent(token)}`
+        );
+        setTokenValid(res.ok);
+      } catch {
+        setTokenValid(false);
+      } finally {
+        setValidating(false);
+      }
+    };
+
+    validate();
+  }, [token]);
+
   const validatePassword = (password: string) => {
-    if (password.length < 8) {
-      return "Password must be at least 8 characters";
-    }
-    if (!/[A-Z]/.test(password)) {
-      return "Password must contain at least one uppercase letter";
-    }
-    if (!/[0-9]/.test(password)) {
-      return "Password must contain at least one number";
-    }
-    if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+    if (password.length < 8) return "Password must be at least 8 characters";
+    if (!/[A-Z]/.test(password)) return "Password must contain at least one uppercase letter";
+    if (!/[0-9]/.test(password)) return "Password must contain at least one number";
+    if (!/[!@#$%^&*(),.?":{}|<>]/.test(password))
       return "Password must contain at least one special character";
-    }
     return "";
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-
-    if (!code || code.length !== 6) {
-      setError("Please enter a valid 6-digit code");
-      return;
-    }
 
     const passwordError = validatePassword(newPassword);
     if (passwordError) {
@@ -55,22 +72,16 @@ export default function ResetPasswordPage() {
     setLoading(true);
 
     try {
-      const response = await fetch(
-        "/api/password-reset/confirm",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ code, newPassword }),
-        }
-      );
+      const response = await fetch("/api/password-reset/confirm", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token, newPassword }),
+      });
 
       const data = await response.json();
 
       if (response.ok) {
         setSuccess(true);
-        // Redirect to portal after 3 seconds
         setTimeout(() => {
           window.location.href = "/portal";
         }, 3000);
@@ -83,6 +94,47 @@ export default function ResetPasswordPage() {
       setLoading(false);
     }
   };
+
+  // --- Loading state while checking token ---
+  if (validating) {
+    return (
+      <div className="min-h-[80vh] bg-white py-12">
+        <Container className="max-w-md">
+          <div className="flex flex-col items-center justify-center gap-4 py-20 text-center">
+            <Loader2 className="h-10 w-10 animate-spin text-brand-600" />
+            <p className="text-sm text-stone-500">Verifying your reset link…</p>
+          </div>
+        </Container>
+      </div>
+    );
+  }
+
+  // --- Invalid or expired token ---
+  if (!tokenValid) {
+    return (
+      <div className="min-h-[80vh] bg-white py-12">
+        <Container className="max-w-md">
+          <div className="rounded-2xl border border-red-200 bg-red-50 p-8 text-center">
+            <div className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-red-100">
+              <ShieldAlert className="h-8 w-8 text-red-600" />
+            </div>
+            <h1 className="mt-4 text-xl font-bold text-stone-900">
+              Invalid or Expired Link
+            </h1>
+            <p className="mt-2 text-sm text-stone-600">
+              This password reset link is no longer valid. It may have expired (links last 1 hour) or already been used.
+            </p>
+            <Link
+              href="/forgot-password"
+              className="mt-6 inline-block w-full rounded-lg bg-brand-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-800"
+            >
+              Request a New Reset Link
+            </Link>
+          </div>
+        </Container>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-[80vh] bg-white py-12">
@@ -102,31 +154,13 @@ export default function ResetPasswordPage() {
             Create New Password
           </h1>
           <p className="mt-2 text-sm text-stone-600">
-            Enter the code from your email and set a new password.
+            Choose a strong new password for your Pioneer Trio account.
           </p>
         </div>
 
         {!success ? (
           <div className="mt-8 rounded-2xl border border-stone-200 bg-white p-6 shadow-sm">
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-stone-700">
-                  6-Digit Reset Code
-                </label>
-                <input
-                  type="text"
-                  required
-                  maxLength={6}
-                  value={code}
-                  onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
-                  className="mt-1 w-full rounded-lg border border-stone-300 px-3 py-2 text-sm text-center text-2xl font-bold tracking-widest focus:border-brand-500 focus:outline-none"
-                  placeholder="000000"
-                />
-                <p className="mt-1 text-xs text-stone-500">
-                  Check your email for the code
-                </p>
-              </div>
-
               <div>
                 <label className="block text-xs font-semibold text-stone-700">
                   New Password
@@ -146,15 +180,11 @@ export default function ResetPasswordPage() {
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600"
                     aria-label={showPassword ? "Hide password" : "Show password"}
                   >
-                    {showPassword ? (
-                      <EyeOff className="h-4 w-4" />
-                    ) : (
-                      <Eye className="h-4 w-4" />
-                    )}
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
                 <p className="mt-1 text-xs text-stone-500">
-                  Min 8 chars, uppercase, number, special char
+                  Min 8 chars, uppercase, number, special character
                 </p>
               </div>
 
@@ -177,11 +207,7 @@ export default function ResetPasswordPage() {
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600"
                     aria-label={showConfirmPassword ? "Hide password" : "Show password"}
                   >
-                    {showConfirmPassword ? (
-                      <EyeOff className="h-4 w-4" />
-                    ) : (
-                      <Eye className="h-4 w-4" />
-                    )}
+                    {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
               </div>
@@ -198,7 +224,7 @@ export default function ResetPasswordPage() {
                 disabled={loading}
                 className="w-full bg-brand-900 text-white hover:bg-brand-800"
               >
-                {loading ? "Resetting..." : "Reset Password"}
+                {loading ? "Resetting…" : "Reset Password"}
               </Button>
             </form>
 
@@ -207,7 +233,7 @@ export default function ResetPasswordPage() {
                 href="/forgot-password"
                 className="text-center block text-xs text-brand-700 hover:underline"
               >
-                Didn't get a code? Request a new one
+                Request a new reset link instead
               </Link>
             </div>
           </div>
@@ -220,7 +246,7 @@ export default function ResetPasswordPage() {
               Password Reset Successful
             </h2>
             <p className="mt-2 text-sm text-stone-600">
-              Your password has been updated. Redirecting to login...
+              Your password has been updated. Redirecting to login…
             </p>
             <Link
               href="/portal"
