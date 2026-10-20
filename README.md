@@ -2,7 +2,7 @@
 
 A modern, fully digital immigration and marriage consultancy platform for Bangladeshi individuals and families worldwide. Built with Next.js 16, TypeScript, React 19, and Tailwind CSS.
 
-**🌐 [Live Application](https://pioneer-frontend-kgrz.onrender.com)** | **📖 [Documentation](./Pioneer_Trio_Services_Website_Documentation.md)**
+**🌐 [Live Application](https://www.pioneertrioservices.com)** | **📖 [Documentation](./Pioneer_Trio_Services_Website_Documentation.md)**
 
 ---
 
@@ -74,7 +74,7 @@ LEAD_EMAIL_TO=info@pioneertrioservices.com
 NEXT_PUBLIC_PLAUSIBLE_DOMAIN=pioneertrioservices.com
 
 # Optional: Site URL (for metadata, sitemap, robots.txt)
-NEXT_PUBLIC_SITE_URL=https://pioneer-frontend-kgrz.onrender.com
+NEXT_PUBLIC_SITE_URL=https://www.pioneertrioservices.com
 
 # Backend API URL (required for production)
 NEXT_PUBLIC_BACKEND_API_URL=https://pioneer-backend-5qhe.onrender.com/api/v1
@@ -314,10 +314,7 @@ npm install --save-dev jest @testing-library/react @testing-library/jest-dom
 
 | Resource | URL |
 |----------|-----|
-| **Live Frontend** | https://pioneer-frontend-kgrz.onrender.com |
-| **Backend API** | https://pioneer-backend-5qhe.onrender.com |
-| **Backend Docs** | https://pioneer-backend-5qhe.onrender.com/api/v1/docs |
-| **Health Check** | https://pioneer-backend-5qhe.onrender.com/api/v1/health |
+| **Live Frontend** | https://www.pioneertrioservices.com |
 | **Render Dashboard** | https://dashboard.render.com |
 | **GitHub** | https://github.com/your-org/Pioneer |
 
